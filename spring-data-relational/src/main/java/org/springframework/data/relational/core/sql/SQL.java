@@ -74,16 +74,6 @@ public abstract class SQL {
 	}
 
 	/**
-	 * Creates a new {@link Column}.
-	 *
-	 * @param name column name, must not be {@literal null} or empty.
-	 * @return the column with {@code name}.
-	 */
-	public static Column column(String name) {
-		return Column.create(name);
-	}
-
-	/**
 	 * Creates a new {@link Column} associated with a source {@link Table}.
 	 *
 	 * @param name column name, must not be {@literal null} or empty.

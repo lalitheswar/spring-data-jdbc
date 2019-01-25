@@ -28,42 +28,14 @@ import org.springframework.util.Assert;
 public class Column extends AbstractSegment implements Expression, Named {
 
 	private final String name;
-	private final @Nullable Table table;
+	private final Table table;
 
-	Column(String name, @Nullable Table table) {
+	Column(String name, Table table) {
 
 		Assert.notNull(name, "Name must not be null");
 
 		this.name = name;
 		this.table = table;
-	}
-
-	/**
-	 * Creates a new {@link Column}.
-	 *
-	 * @param name column name, must not {@literal null} or empty.
-	 * @return the new {@link Column}.
-	 */
-	public static Column create(String name) {
-
-		Assert.hasText(name, "Name must not be null or empty");
-
-		return new Column(name, null);
-	}
-
-	/**
-	 * Creates a new aliased {@link Column}.
-	 *
-	 * @param name column name, must not {@literal null} or empty.
-	 * @param alias alias name, must not {@literal null} or empty.
-	 * @return the new {@link Column}.
-	 */
-	public static Column aliased(String name, String alias) {
-
-		Assert.hasText(name, "Name must not be null or empty");
-		Assert.hasText(alias, "Alias must not be null or empty");
-
-		return new AliasedColumn(name, null, alias);
 	}
 
 	/**
@@ -192,7 +164,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 
 		private final String alias;
 
-		private AliasedColumn(String name, @Nullable Table table, String alias) {
+		private AliasedColumn(String name, Table table, String alias) {
 			super(name, table);
 			this.alias = alias;
 		}

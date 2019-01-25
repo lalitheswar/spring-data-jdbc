@@ -35,17 +35,17 @@ public class SelectBuilderUnitTests {
 
 		SelectBuilder builder = SQL.select();
 
-		Column foo = SQL.column("foo");
-		Column bar = SQL.column("bar");
 		Table table = SQL.table("mytable");
+		Column foo = table.column("foo");
+		Column bar = table.column("bar");
 
 		Select select = builder.select(foo, bar).from(table).build();
 
 		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
 		select.visit(visitor);
 
-		assertThat(visitor.enter).containsSequence(foo, bar, new From(table), table);
-		assertThat(visitor.leave).containsSequence(foo, bar, table, new From(table));
+		assertThat(visitor.enter).containsSequence(foo, table, bar, table, new From(table), table);
+		assertThat(visitor.leave).containsSequence(table, foo, table, bar, table, new From(table));
 	}
 
 	@Test // DATAJDBC-309
@@ -53,15 +53,15 @@ public class SelectBuilderUnitTests {
 
 		SelectBuilder builder = SQL.select();
 
-		Column foo = SQL.column("foo");
 		Table table = SQL.table("mytable");
+		Column foo = table.column("foo");
 
 		Select select = builder.top(10).select(foo).from(table).build();
 
 		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
 		select.visit(visitor);
 
-		assertThat(visitor.enter).containsSequence(SelectTop.create(10), foo, new From(table), table);
+		assertThat(visitor.enter).containsSequence(SelectTop.create(10), foo, table, new From(table), table);
 	}
 
 	@Test // DATAJDBC-309
@@ -112,12 +112,9 @@ public class SelectBuilderUnitTests {
 		Column name = employee.column("name").as("emp_name");
 		Column department_name = employee.column("name").as("department_name");
 
-		Select select = builder.select(name, department_name).from(employee)
-				.join(department)
-				.on(SQL.column("department_id", employee))
-				.equals(SQL.column("id", department))
-				.and(SQL.column("tenant", employee))
-				.equals(SQL.column("tenant", department))
+		Select select = builder.select(name, department_name).from(employee).join(department)
+				.on(SQL.column("department_id", employee)).equals(SQL.column("id", department))
+				.and(SQL.column("tenant", employee)).equals(SQL.column("tenant", department))
 				.orderBy(OrderByField.from(name).asc()).build();
 
 		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
@@ -128,10 +125,10 @@ public class SelectBuilderUnitTests {
 		Join join = visitor.enter.stream().filter(Join.class::isInstance).map(Join.class::cast).findFirst().get();
 
 		assertThat(join.getJoinTable()).isEqualTo(department);
-		assertThat(join.getOn().toString()).isEqualTo(new SimpleSegment("employee.department_id = department.id AND employee.tenant = department.tenant").toString());
+		assertThat(join.getOn().toString()).isEqualTo(
+				new SimpleSegment("employee.department_id = department.id AND employee.tenant = department.tenant").toString());
 		assertThat(join.getType()).isEqualTo(JoinType.JOIN);
 	}
-
 
 	static class CapturingSelectVisitor implements Visitor {
 

@@ -29,9 +29,12 @@ public class NaiveSqlRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderSingleColumn() {
 
-		Select select = Select.builder().select("foo").from("bar").build();
+		Table bar = SQL.table("bar");
+		Column foo = bar.column("foo");
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo FROM bar");
+		Select select = Select.builder().select(foo).from(bar).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT bar.foo FROM bar");
 	}
 
 	@Test // DATAJDBC-309
@@ -50,7 +53,8 @@ public class NaiveSqlRendererUnitTests {
 		Table table1 = Table.create("table1");
 		Table table2 = Table.create("table2");
 
-		Select select = Select.builder().select(table1.column("col1")).select(table2.column("col2")).from(table1).from(table2).build();
+		Select select = Select.builder().select(table1.column("col1")).select(table2.column("col2")).from(table1)
+				.from(table2).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT table1.col1, table2.col2 FROM table1, table2");
 	}
@@ -58,17 +62,25 @@ public class NaiveSqlRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderDistinct() {
 
-		Select select = Select.builder().select(Functions.distinct("foo", "bar")).from("bar").build();
+		Table table = SQL.table("bar");
+		Column foo = table.column("foo");
+		Column bar = table.column("bar");
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT DISTINCT foo, bar FROM bar");
+		Select select = Select.builder().select(Functions.distinct(foo, bar)).from(table).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT DISTINCT bar.foo, bar.bar FROM bar");
 	}
 
 	@Test // DATAJDBC-309
 	public void shouldRenderCountFunction() {
 
-		Select select = Select.builder().select(Functions.count("foo"), Column.create("bar")).from("bar").build();
+		Table table = SQL.table("bar");
+		Column foo = table.column("foo");
+		Column bar = table.column("bar");
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT COUNT(foo), bar FROM bar");
+		Select select = Select.builder().select(Functions.count(foo), bar).from(table).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT COUNT(bar.foo), bar.bar FROM bar");
 	}
 
 	@Test // DATAJDBC-309
@@ -81,8 +93,8 @@ public class NaiveSqlRendererUnitTests {
 				.join(department).on(employee.column("department_id")).equals(department.column("id")) //
 				.build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee " +
-				"JOIN department ON employee.department_id = department.id");
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+				+ "JOIN department ON employee.department_id = department.id");
 	}
 
 	@Test // DATAJDBC-309
@@ -96,9 +108,8 @@ public class NaiveSqlRendererUnitTests {
 				.and(employee.column("tenant")).equals(department.column("tenant")) //
 				.build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee " +
-				"JOIN department ON employee.department_id = department.id " +
-				"AND employee.tenant = department.tenant");
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+				+ "JOIN department ON employee.department_id = department.id " + "AND employee.tenant = department.tenant");
 	}
 
 	@Test // DATAJDBC-309
@@ -114,18 +125,21 @@ public class NaiveSqlRendererUnitTests {
 				.join(tenant).on(tenant.column("tenant_id")).equals(department.column("tenant")) //
 				.build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee " +
-				"JOIN department ON employee.department_id = department.id " +
-				"AND employee.tenant = department.tenant " +
-				"JOIN tenant AS tenant_base ON tenant_base.tenant_id = department.tenant");
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT employee.id, department.name FROM employee "
+				+ "JOIN department ON employee.department_id = department.id " + "AND employee.tenant = department.tenant "
+				+ "JOIN tenant AS tenant_base ON tenant_base.tenant_id = department.tenant");
 	}
 
 	@Test // DATAJDBC-309
 	public void shouldRenderOrderByIndex() {
 
-		Select select = Select.builder().select(Functions.count("foo"), Column.create("bar")).from("bar").orderBy(1, 2).build();
+		Table table = SQL.table("bar");
+		Column foo = table.column("foo");
+		Column bar = table.column("bar");
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT COUNT(foo), bar FROM bar ORDER BY 1, 2");
+		Select select = Select.builder().select(Functions.count(foo), bar).from(table).orderBy(1, 2).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT COUNT(bar.foo), bar.bar FROM bar ORDER BY 1, 2");
 	}
 
 	@Test // DATAJDBC-309
@@ -136,14 +150,18 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(column).from(employee).orderBy(OrderByField.from(column).asc()).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT emp.name AS emp_name FROM employee AS emp ORDER BY emp_name ASC");
+		assertThat(NaiveSqlRenderer.render(select))
+				.isEqualTo("SELECT emp.name AS emp_name FROM employee AS emp ORDER BY emp_name ASC");
 	}
 
 	@Test // DATAJDBC-309
 	public void shouldRenderOrderLimitOffset() {
 
-		Select select = Select.builder().select(Column.create("bar")).from("foo").limitOffset(10, 20).build();
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT bar FROM foo LIMIT 10 OFFSET 20");
+		Select select = Select.builder().select(bar).from("foo").limitOffset(10, 20).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo LIMIT 10 OFFSET 20");
 	}
 }

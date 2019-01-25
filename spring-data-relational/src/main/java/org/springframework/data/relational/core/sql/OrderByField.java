@@ -44,10 +44,6 @@ public class OrderByField extends AbstractSegment implements Segment {
 		return new OrderByField(column, null, NullHandling.NATIVE);
 	}
 
-	public static OrderByField create(String name) {
-		return new OrderByField(Column.create(name), null, NullHandling.NATIVE);
-	}
-
 	public static OrderByField index(int index) {
 		return new OrderByField(new IndexedOrderByField(index), null, NullHandling.NATIVE);
 	}

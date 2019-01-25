@@ -54,15 +54,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder#select(java.lang.String)
-	 */
-	@Override
-	public DefaultSelectBuilder select(String sql) {
-		return select(Column.create(sql));
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.SelectBuilder#select(org.springframework.data.relational.core.sql.Expression)
 	 */
 	@Override
@@ -159,15 +150,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	public SelectFromAndJoin offset(long offset) {
 		this.offset = offset;
 		return this;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy#orderBy(java.lang.String)
-	 */
-	@Override
-	public DefaultSelectBuilder orderBy(String field) {
-		return orderBy(OrderByField.create(field));
 	}
 
 	/*
@@ -307,15 +289,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOn#on(java.lang.String)
-		 */
-		@Override
-		public SelectOnConditionComparison on(String column) {
-			return on(Column.create(column));
-		}
-
-		/*
-		 * (non-Javadoc)
 		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOn#on(org.springframework.data.relational.core.sql.Expression)
 		 */
 		@Override
@@ -327,30 +300,12 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 		/*
 		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOnConditionComparison#equals(java.lang.String)
-		 */
-		@Override
-		public JoinBuilder equals(String column) {
-			return equals(Column.create(column));
-		}
-
-		/*
-		 * (non-Javadoc)
 		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOnConditionComparison#equals(org.springframework.data.relational.core.sql.Expression)
 		 */
 		@Override
 		public JoinBuilder equals(Expression column) {
 			this.to = column;
 			return this;
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOnCondition#and(java.lang.String)
-		 */
-		@Override
-		public SelectOnConditionComparison and(String column) {
-			return and(Column.create(column));
 		}
 
 		/*
@@ -379,17 +334,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 			finishCondition();
 			return new Join(JoinType.JOIN, table, condition);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOrdered#orderBy(java.lang.String)
-		 */
-		@Override
-		public SelectOrdered orderBy(String field) {
-
-			selectBuilder.join(finishJoin());
-			return selectBuilder.orderBy(field);
 		}
 
 		/*
