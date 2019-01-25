@@ -187,10 +187,7 @@ public class NaiveSqlRenderer {
 				}
 			}
 
-			if (segment instanceof ConditionGroup) {
-				addSpaceIfNecessary();
-				builder.append("(");
-			} else if (segment instanceof Condition && segments.peek() instanceof Condition) {
+			if (segment instanceof Condition && segments.peek() instanceof Condition) {
 
 				if (!nextConditionRequiresContinue) {
 					nextConditionRequiresContinue = true;
@@ -291,10 +288,6 @@ public class NaiveSqlRenderer {
 				ifAliased(segment, aliased -> builder.append(" AS ").append(aliased.getAlias()));
 
 				nextRequiresComma = true;
-			}
-
-			if (segment instanceof ConditionGroup) {
-				builder.append(")");
 			}
 
 			if (segment instanceof SimpleCondition) {
