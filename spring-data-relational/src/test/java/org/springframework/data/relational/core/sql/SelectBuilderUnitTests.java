@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalLong;
 
 import org.junit.Test;
 import org.springframework.data.relational.core.sql.Join.JoinType;
@@ -61,7 +62,8 @@ public class SelectBuilderUnitTests {
 		CapturingSelectVisitor visitor = new CapturingSelectVisitor();
 		select.visit(visitor);
 
-		assertThat(visitor.enter).containsSequence(SelectTop.create(10), foo, table, new From(table), table);
+		assertThat(visitor.enter).containsSequence(foo, table, new From(table), table);
+		assertThat(select.getLimit()).isEqualTo(OptionalLong.of(10));
 	}
 
 	@Test // DATAJDBC-309

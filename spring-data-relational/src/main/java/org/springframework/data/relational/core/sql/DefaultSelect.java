@@ -29,7 +29,6 @@ import org.springframework.util.Assert;
  */
 class DefaultSelect implements Select {
 
-	private final @Nullable SelectTop top;
 	private final List<Expression> selectList;
 	private final From from;
 	private final long limit;
@@ -38,10 +37,9 @@ class DefaultSelect implements Select {
 	private final @Nullable Where where;
 	private final List<OrderByField> orderBy;
 
-	DefaultSelect(@Nullable SelectTop top, List<Expression> selectList, List<Table> from, long limit, long offset,
+	DefaultSelect(List<Expression> selectList, List<Table> from, long limit, long offset,
 				  List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy) {
 
-		this.top = top;
 		this.selectList = new ArrayList<>(selectList);
 		this.from = new From(from);
 		this.limit = limit;
@@ -80,8 +78,6 @@ class DefaultSelect implements Select {
 
 		visitor.enter(this);
 
-		visitIfNotNull(top, visitor);
-
 		selectList.forEach(it -> it.visit(visitor));
 		from.visit(visitor);
 		joins.forEach(it -> it.visit(visitor));
@@ -94,6 +90,7 @@ class DefaultSelect implements Select {
 	}
 
 	private void visitIfNotNull(@Nullable Visitable visitable, Visitor visitor) {
+
 		if (visitable != null) {
 			visitable.visit(visitor);
 		}
