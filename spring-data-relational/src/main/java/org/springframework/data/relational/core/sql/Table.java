@@ -28,7 +28,7 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
-public class Table extends AbstractSegment implements Segment, Named {
+public class Table extends AbstractSegment implements Segment {
 
 	private final String name;
 
