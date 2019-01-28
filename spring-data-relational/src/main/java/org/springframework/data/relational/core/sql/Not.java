@@ -18,41 +18,30 @@ package org.springframework.data.relational.core.sql;
 /**
  * @author Jens Schauder
  */
-public class IsNull implements Condition {
+public class Not implements Condition {
 
-	private final Expression expression;
+	private final Condition condition;
 
-	private final boolean negated;
+	public Not(Condition condition) {
 
-	public IsNull(Expression expression, boolean negated) {
-
-		this.expression = expression;
-		this.negated = negated;
-	}
-
-	public IsNull(Expression expression) {
-		this(expression, false);
+		this.condition = condition;
 	}
 
 	@Override
 	public Condition not() {
-		return new IsNull(expression, !negated);
+		return condition;
 	}
 
 	@Override
 	public void visit(Visitor visitor) {
 
 		visitor.enter(this);
-		expression.visit(visitor);
+		condition.visit(visitor);
 		visitor.leave(this);
 	}
 
 	@Override
 	public String toString() {
-		return expression + (negated ? " IS NOT NULL" : " IS NULL");
-	}
-
-	public boolean isNegated() {
-		return negated;
+		return "NOT " + condition.toString();
 	}
 }

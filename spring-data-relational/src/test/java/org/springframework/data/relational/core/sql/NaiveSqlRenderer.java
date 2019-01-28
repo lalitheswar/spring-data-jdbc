@@ -239,7 +239,11 @@ public class NaiveSqlRenderer {
 			@Override
 			public void leave(Visitable segment) {
 				if (segment instanceof IsNull) {
-					builder.append(" IS NULL");
+					if (((IsNull) segment).isNegated()) {
+						builder.append(" IS NOT NULL");
+					} else {
+						builder.append(" IS NULL");
+					}
 				}
 			}
 		}

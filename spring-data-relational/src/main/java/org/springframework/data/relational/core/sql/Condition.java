@@ -43,4 +43,7 @@ public interface Condition extends Segment {
 		return new OrCondition(this, other);
 	}
 
+	default Condition not() {
+		return new Not(this);
+	}
 }

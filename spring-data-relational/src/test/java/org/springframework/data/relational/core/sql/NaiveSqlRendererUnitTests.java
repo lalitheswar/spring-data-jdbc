@@ -165,5 +165,10 @@ public class NaiveSqlRendererUnitTests {
 	@Test // DATAJDBC-309
 	public void shouldRenderNotNull() {
 
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
+
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isNull(bar).not()).build();
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NOT NULL");
 	}
 }
