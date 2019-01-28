@@ -26,6 +26,7 @@ import org.springframework.util.Assert;
  * renderer.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class NaiveSqlRenderer {
 
@@ -103,7 +104,17 @@ public class NaiveSqlRenderer {
 
 		@Override
 		public void leave(Visitable segment) {
-			visitors.peek().leave(segment);
+			if (segment instanceof Select) {
+				OptionalLong limit = ((Select) segment).getLimit();
+				if (limit.isPresent())
+				builder.append(" LIMIT ").append(limit.getAsLong());
+
+				OptionalLong offset = ((Select) segment).getOffset();
+				if (offset.isPresent())
+				builder.append(" OFFSET ").append(offset.getAsLong());
+			} else {
+				visitors.peek().leave(segment);
+			}
 		}
 
 		class SelectVisitor implements Visitor {
@@ -168,7 +179,6 @@ public class NaiveSqlRenderer {
 		}
 
 		private class FromClauseVisitor extends ListVisitor implements Visitor {
-
 
 			@Override
 			public void enter(Visitable segment) {
