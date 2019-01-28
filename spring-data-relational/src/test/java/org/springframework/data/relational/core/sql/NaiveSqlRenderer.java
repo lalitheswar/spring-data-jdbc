@@ -168,12 +168,24 @@ public class NaiveSqlRenderer {
 		}
 
 		private class FromClauseVisitor implements Visitor {
+
+			boolean ignoreTable = false;
+
 			@Override
-			public void enter(Visitable segment) {}
+			public void enter(Visitable segment) {
+
+				if (segment instanceof Join) {
+					builder.append(" JOIN ");
+				} else if (segment instanceof Condition) {
+					builder.append(" ON ");
+					builder.append(segment);
+					ignoreTable = true;
+				}
+			}
 
 			@Override
 			public void leave(Visitable segment) {
-				if (segment instanceof Table) {
+				if (segment instanceof Table && !ignoreTable) {
 					builder.append(((Table) segment).getName());
 					if (segment instanceof Table.AliasedTable) {
 						builder.append(" AS ").append(((Table.AliasedTable) segment).getAlias());
