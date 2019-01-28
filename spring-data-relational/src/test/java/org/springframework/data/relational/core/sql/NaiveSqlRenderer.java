@@ -115,8 +115,8 @@ public class NaiveSqlRenderer {
 		}
 
 		class ListVisitor {
-			boolean firstColumn = true;
-			boolean inColumn = false;
+			private boolean firstColumn = true;
+			private boolean inColumn = false;
 
 			protected void onColumnStart() {
 				if (inColumn) {
@@ -129,11 +129,20 @@ public class NaiveSqlRenderer {
 				firstColumn = false;
 
 			}
+
+			protected void onColumnEnd() {
+				inColumn = false;
+			}
 		}
+
 		class SelectListVisitor extends ListVisitor implements Visitor {
 
 			@Override
 			public void enter(Visitable segment) {
+				onColumnStart();
+				if (segment instanceof Distinct) {
+					builder.append("DISTINCT ");
+				}
 				if (segment instanceof SimpleFunction) {
 					onColumnStart();
 					builder.append(((SimpleFunction) segment).getFunctionName()).append("(");
@@ -142,21 +151,20 @@ public class NaiveSqlRenderer {
 
 			@Override
 			public void leave(Visitable segment) {
-				onColumnStart();
 
 				if (segment instanceof Table) {
 					builder.append(((Table) segment).getReferenceName()).append('.');
 				} else if (segment instanceof SimpleFunction) {
 					builder.append(")");
-					inColumn = false;
 				} else if (segment instanceof Column) {
 					builder.append(((Column) segment).getName());
 					if (segment instanceof Column.AliasedColumn) {
 						builder.append(" AS ").append(((Column.AliasedColumn) segment).getAlias());
 					}
 				}
-
+				onColumnEnd();
 			}
+
 		}
 
 		private class FromClauseVisitor implements Visitor {
@@ -178,6 +186,7 @@ public class NaiveSqlRenderer {
 
 			@Override
 			public void enter(Visitable segment) {
+				onColumnStart();
 
 			}
 
@@ -185,7 +194,6 @@ public class NaiveSqlRenderer {
 			public void leave(Visitable segment) {
 
 				if (segment instanceof Column) {
-					onColumnStart();
 					builder.append(((Column) segment).getReferenceName());
 				}
 
@@ -195,8 +203,8 @@ public class NaiveSqlRenderer {
 						builder.append(" ") //
 								.append(field.getDirection());
 					}
-					inColumn = false;
 				}
+				onColumnEnd();
 			}
 		}
 	}
