@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -155,10 +156,12 @@ public class NaiveSqlRendererUnitTests {
 
 	@Test // DATAJDBC-309
 	public void shouldRenderIsNull() {
+
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
 
 		Select select = Select.builder().select(bar).from(table).where(Conditions.isNull(bar)).build();
+
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NULL");
 	}
 
@@ -169,6 +172,18 @@ public class NaiveSqlRendererUnitTests {
 		Column bar = table.column("bar");
 
 		Select select = Select.builder().select(bar).from(table).where(Conditions.isNull(bar).not()).build();
+
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NOT NULL");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldRenderEqualityCondition() {
+
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
+
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, new BindParameterExpression("name"))).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
 	}
 }

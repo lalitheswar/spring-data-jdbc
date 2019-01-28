@@ -50,6 +50,10 @@ public abstract class Conditions {
 		return new IsNull(expression);
 	}
 
+	public static Condition isEqual(Column bar, BindParameterExpression param) {
+		return new Equals(bar, param);
+	}
+
 	static class ConstantCondition extends AbstractSegment implements Condition {
 
 		private final String condition;

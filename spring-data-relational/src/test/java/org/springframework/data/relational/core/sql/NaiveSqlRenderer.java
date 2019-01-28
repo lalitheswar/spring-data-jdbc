@@ -101,7 +101,7 @@ public class NaiveSqlRenderer {
 			if (segment instanceof Where) {
 				visitors.pop();
 				builder.append(" WHERE ");
-				visitors.push(new WhereClauseVisitor());
+				visitors.push(new ConditionVisitor());
 			}
 
 			visitors.peek().enter(segment);
@@ -228,40 +228,61 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class WhereClauseVisitor implements Visitor {
+		private class ConditionVisitor implements Visitor {
+			ExpressionVisitor left;
+			ExpressionVisitor right;
+
 			@Override
 			public void enter(Visitable segment) {
 				if (segment instanceof IsNull) {
-					visitors.push(new ExpressionVisitor());
+					left = new ExpressionVisitor();
+					visitors.push(left);
+				}
+				if (segment instanceof Equals) {
+					left = new ExpressionVisitor();
+					right = new ExpressionVisitor();
+					visitors.push(right);
+					visitors.push(left);
 				}
 			}
 
 			@Override
 			public void leave(Visitable segment) {
+
 				if (segment instanceof IsNull) {
+
+					builder.append(left.value);
 					if (((IsNull) segment).isNegated()) {
 						builder.append(" IS NOT NULL");
 					} else {
 						builder.append(" IS NULL");
 					}
+				} else if (segment instanceof Equals) {
+					builder.append(left.value).append(" = ").append(right.value);
 				}
 			}
 		}
 
 		private class ExpressionVisitor implements Visitor {
+
+			String value = "";
+
 			@Override
 			public void enter(Visitable segment) {
-				if (segment instanceof Column) {
-					builder.append(((Column) segment).getTable().getName()) //
-							.append('.') //
-							.append(((Column) segment).getName());
 
+				if (segment instanceof Column) {
+					value = ((Column) segment).getTable().getName() + "." + ((Column) segment).getName();
+				} else if (segment instanceof BindParameterExpression) {
+					value = segment.toString();
 				}
 			}
 
 			@Override
 			public void leave(Visitable segment) {
-				visitors.pop();
+
+				if (segment instanceof Column || segment instanceof BindParameterExpression) {
+					visitors.pop();
+				}
 			}
 		}
 
