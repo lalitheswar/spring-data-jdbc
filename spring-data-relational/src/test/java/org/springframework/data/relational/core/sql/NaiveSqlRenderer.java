@@ -177,10 +177,12 @@ public class NaiveSqlRenderer {
 					builder.append(" JOIN ");
 					visitors.push(new JoinVisitor());
 				} else if (segment instanceof Table) {
+					onColumnStart();
 					builder.append(((Table) segment).getName());
 					if (segment instanceof Table.AliasedTable) {
 						builder.append(" AS ").append(((Table.AliasedTable) segment).getAlias());
 					}
+					onColumnEnd();
 				}
 			}
 
