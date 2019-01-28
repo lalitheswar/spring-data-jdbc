@@ -272,15 +272,19 @@ public class NaiveSqlRenderer {
 
 				if (segment instanceof Column) {
 					value = ((Column) segment).getTable().getName() + "." + ((Column) segment).getName();
-				} else if (segment instanceof BindParameterExpression) {
-					value = segment.toString();
+				} else if (segment instanceof BindMarker) {
+					if (segment instanceof BindMarker.NamedBindMarker) {
+						value = ":" + ((BindMarker.NamedBindMarker) segment).getName();
+					} else {
+						value = segment.toString();
+					}
 				}
 			}
 
 			@Override
 			public void leave(Visitable segment) {
 
-				if (segment instanceof Column || segment instanceof BindParameterExpression) {
+				if (segment instanceof Column || segment instanceof BindMarker) {
 					visitors.pop();
 				}
 			}

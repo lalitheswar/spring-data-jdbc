@@ -182,7 +182,7 @@ public class NaiveSqlRendererUnitTests {
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
 
-		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, new BindParameterExpression("name"))).build();
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name"))).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
 	}
