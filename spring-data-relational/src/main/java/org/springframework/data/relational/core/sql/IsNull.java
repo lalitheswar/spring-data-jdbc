@@ -18,13 +18,15 @@ package org.springframework.data.relational.core.sql;
 /**
  * @author Jens Schauder
  */
-public class IsNull implements Condition {
+public class IsNull extends AbstractSegment implements Condition {
 
 	private final Expression expression;
 
 	private final boolean negated;
 
 	public IsNull(Expression expression, boolean negated) {
+
+		super(expression);
 
 		this.expression = expression;
 		this.negated = negated;
@@ -37,14 +39,6 @@ public class IsNull implements Condition {
 	@Override
 	public Condition not() {
 		return new IsNull(expression, !negated);
-	}
-
-	@Override
-	public void visit(Visitor visitor) {
-
-		visitor.enter(this);
-		expression.visit(visitor);
-		visitor.leave(this);
 	}
 
 	@Override

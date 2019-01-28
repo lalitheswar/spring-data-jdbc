@@ -20,7 +20,7 @@ import javax.swing.text.Segment;
 /**
  * @author Jens Schauder
  */
-public class BindParameterExpression extends Segment implements Expression {
+public class BindParameterExpression extends AbstractSegment implements Expression {
 
 	private final String name;
 
@@ -29,6 +29,9 @@ public class BindParameterExpression extends Segment implements Expression {
 	}
 
 	public BindParameterExpression(String name) {
+
+		super();
+
 		this.name = name;
 	}
 

@@ -22,24 +22,15 @@ import org.springframework.util.Assert;
  *
  * @author Mark Paluch
  */
-public class Where extends AbstractSegment implements Segment {
+public class Where extends AbstractSegment {
 
 	private final Condition condition;
 
 	Where(Condition condition) {
+
+		super(condition);
+
 		this.condition = condition;
-	}
-
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-
-		condition.visit(visitor);
-
-		visitor.leave(this);
 	}
 
 	@Override

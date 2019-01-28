@@ -34,7 +34,7 @@ import java.util.OptionalLong;
  * @see SelectBuilder
  * @see SQL
  */
-public interface Select extends Visitable {
+public interface Select extends Segment, Visitable {
 
 
 	/**

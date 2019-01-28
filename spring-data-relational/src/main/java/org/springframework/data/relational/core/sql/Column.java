@@ -32,6 +32,7 @@ public class Column extends AbstractSegment implements Expression, Named {
 
 	Column(String name, Table table) {
 
+		super(table);
 		Assert.notNull(name, "Name must not be null");
 
 		this.name = name;
@@ -94,23 +95,6 @@ public class Column extends AbstractSegment implements Expression, Named {
 		Assert.notNull(table, "Table must not be null");
 
 		return new Column(name, table);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-
-		if (table != null) {
-			table.visit(visitor);
-		}
-		visitor.leave(this);
 	}
 
 	/*

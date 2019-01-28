@@ -18,11 +18,13 @@ package org.springframework.data.relational.core.sql;
 /**
  * @author Jens Schauder
  */
-public class Not implements Condition {
+public class Not extends AbstractSegment implements Condition {
 
 	private final Condition condition;
 
 	public Not(Condition condition) {
+
+		super(condition);
 
 		this.condition = condition;
 	}
@@ -30,14 +32,6 @@ public class Not implements Condition {
 	@Override
 	public Condition not() {
 		return condition;
-	}
-
-	@Override
-	public void visit(Visitor visitor) {
-
-		visitor.enter(this);
-		condition.visit(visitor);
-		visitor.leave(this);
 	}
 
 	@Override

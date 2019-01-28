@@ -24,29 +24,17 @@ import org.springframework.util.Assert;
 /**
  * @author Jens Schauder
  */
-public abstract class MultipleCondition implements Condition {
+public abstract class MultipleCondition extends AbstractSegment implements Condition {
 
 	private final List<Condition> conditions;
 	private final String delimiter;
 
 	MultipleCondition(String delimiter, Condition... conditions) {
 
+		super(conditions);
+
 		this.delimiter = delimiter;
 		this.conditions = Arrays.asList(conditions);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-		conditions.forEach(c -> c.visit(visitor));
-		visitor.leave(this);
 	}
 
 	/*

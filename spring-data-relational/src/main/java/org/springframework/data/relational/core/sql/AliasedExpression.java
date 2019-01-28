@@ -20,12 +20,15 @@ package org.springframework.data.relational.core.sql;
  *
  * @author Jens Schauder
  */
-public class AliasedExpression implements Aliased, Expression {
+public class AliasedExpression extends AbstractSegment implements Aliased, Expression {
 
 	private final Expression expression;
 	private final String alias;
 
 	public AliasedExpression(Expression expression, String alias) {
+
+		super(expression);
+
 		this.expression = expression;
 		this.alias = alias;
 	}

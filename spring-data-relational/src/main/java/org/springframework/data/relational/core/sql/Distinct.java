@@ -32,21 +32,8 @@ public class Distinct extends AbstractSegment implements Expression {
 	private List<Column> columns;
 
 	Distinct(List<Column> columns) {
+		super(columns.toArray(new Column[]{}));
 		this.columns = columns;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.Visitable#visit(org.springframework.data.relational.core.sql.Visitor)
-	 */
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-		columns.forEach(it -> it.visit(visitor));
-		visitor.leave(this);
 	}
 
 	/*

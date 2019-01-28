@@ -15,20 +15,19 @@
  */
 package org.springframework.data.relational.core.sql;
 
-import javax.swing.text.Segment;
-
 /**
  * @author Jens Schauder
  */
-public class SubselectExpression extends Segment implements Expression {
+public class SubselectExpression extends AbstractSegment implements Expression {
 
 	private final Select subselect;
 
 	public SubselectExpression(Select subselect) {
+
+		super(subselect);
+
 		this.subselect = subselect;
 	}
-
-
 
 	@Override
 	public String toString() {
