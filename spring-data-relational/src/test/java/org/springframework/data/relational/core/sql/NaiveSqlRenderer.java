@@ -167,29 +167,47 @@ public class NaiveSqlRenderer {
 
 		}
 
-		private class FromClauseVisitor implements Visitor {
+		private class FromClauseVisitor extends ListVisitor implements Visitor {
 
-			boolean ignoreTable = false;
 
 			@Override
 			public void enter(Visitable segment) {
 
 				if (segment instanceof Join) {
 					builder.append(" JOIN ");
-				} else if (segment instanceof Condition) {
+					visitors.push(new JoinVisitor());
+				} else if (segment instanceof Table) {
+					builder.append(((Table) segment).getName());
+					if (segment instanceof Table.AliasedTable) {
+						builder.append(" AS ").append(((Table.AliasedTable) segment).getAlias());
+					}
+				}
+			}
+
+		}
+
+		private class JoinVisitor implements Visitor {
+			boolean inCondition = false;
+
+
+			@Override
+			public void enter(Visitable segment) {
+				if (segment instanceof Table && !inCondition) {
+					builder.append(((Table) segment).getName());
+					if (segment instanceof Table.AliasedTable) {
+						builder.append(" AS ").append(((Table.AliasedTable) segment).getAlias());
+					}
+				} else if (segment instanceof Condition && !inCondition) {
 					builder.append(" ON ");
 					builder.append(segment);
-					ignoreTable = true;
+					inCondition = true;
 				}
 			}
 
 			@Override
 			public void leave(Visitable segment) {
-				if (segment instanceof Table && !ignoreTable) {
-					builder.append(((Table) segment).getName());
-					if (segment instanceof Table.AliasedTable) {
-						builder.append(" AS ").append(((Table.AliasedTable) segment).getAlias());
-					}
+				if (segment instanceof Join) {
+					visitors.pop();
 				}
 			}
 		}
@@ -219,6 +237,7 @@ public class NaiveSqlRenderer {
 				onColumnEnd();
 			}
 		}
+
 	}
 
 	/**
