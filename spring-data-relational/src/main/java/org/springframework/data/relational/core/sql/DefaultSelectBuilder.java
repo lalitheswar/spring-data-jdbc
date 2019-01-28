@@ -153,19 +153,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy#orderBy(int[])
-	 */
-	@Override
-	public DefaultSelectBuilder orderBy(int... indexes) {
-
-		for (int index : indexes) {
-			this.orderBy.add(OrderByField.index(index));
-		}
-		return this;
-	}
-
-	/*
-	 * (non-Javadoc)
 	 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectFromAndOrderBy#orderBy(org.springframework.data.relational.core.sql.OrderByField[])
 	 */
 	@Override
@@ -333,16 +320,6 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 
 			finishCondition();
 			return new Join(JoinType.JOIN, table, condition);
-		}
-
-		/*
-		 * (non-Javadoc)
-		 * @see org.springframework.data.relational.core.sql.SelectBuilder.SelectOrdered#orderBy(int[])
-		 */
-		@Override
-		public SelectOrdered orderBy(int... indexes) {
-			selectBuilder.join(finishJoin());
-			return selectBuilder.orderBy(indexes);
 		}
 
 		/*

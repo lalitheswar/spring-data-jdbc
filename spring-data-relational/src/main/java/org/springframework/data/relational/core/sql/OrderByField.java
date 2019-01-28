@@ -44,10 +44,6 @@ public class OrderByField extends AbstractSegment implements Segment {
 		return new OrderByField(column, null, NullHandling.NATIVE);
 	}
 
-	public static OrderByField index(int index) {
-		return new OrderByField(new IndexedOrderByField(index), null, NullHandling.NATIVE);
-	}
-
 	public OrderByField asc() {
 		return new OrderByField(expression, Direction.ASC, NullHandling.NATIVE);
 	}
@@ -92,12 +88,5 @@ public class OrderByField extends AbstractSegment implements Segment {
 	@Override
 	public String toString() {
 		return direction != null ? expression.toString() + " " + direction : expression.toString();
-	}
-
-	static class IndexedOrderByField extends Column implements Expression {
-
-		IndexedOrderByField(int index) {
-			super("" + index, null);
-		}
 	}
 }

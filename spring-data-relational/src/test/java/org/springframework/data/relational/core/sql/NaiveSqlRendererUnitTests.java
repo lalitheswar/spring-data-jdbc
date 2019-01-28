@@ -131,18 +131,6 @@ public class NaiveSqlRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	public void shouldRenderOrderByIndex() {
-
-		Table table = SQL.table("bar");
-		Column foo = table.column("foo");
-		Column bar = table.column("bar");
-
-		Select select = Select.builder().select(Functions.count(foo), bar).from(table).orderBy(1, 2).build();
-
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT COUNT(bar.foo), bar.bar FROM bar ORDER BY 1, 2");
-	}
-
-	@Test // DATAJDBC-309
 	public void shouldRenderOrderByName() {
 
 		Table employee = SQL.table("employee").as("emp");

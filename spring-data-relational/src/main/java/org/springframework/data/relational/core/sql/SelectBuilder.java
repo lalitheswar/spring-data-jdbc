@@ -29,7 +29,6 @@ public interface SelectBuilder {
 	 *
 	 * @param count the top count.
 	 * @return {@code this} {@link SelectBuilder}.
-	 * @see SelectTop
 	 */
 	SelectBuilder top(int count);
 
@@ -209,9 +208,6 @@ public interface SelectBuilder {
 		SelectFromAndOrderBy orderBy(Column... columns);
 
 		@Override
-		SelectFromAndOrderBy orderBy(int... indexes);
-
-		@Override
 		SelectFromAndOrderBy orderBy(OrderByField... orderByFields);
 
 		@Override
@@ -359,15 +355,6 @@ public interface SelectBuilder {
 		 * @return {@code this} builder.
 		 */
 		SelectOrdered orderBy(Column... columns);
-
-		/**
-		 * Add an order by field using {@code indexes} using default sort semantics.
-		 *
-		 * @param indexes field indexes as declared in the select list.
-		 * @return {@code this} builder.
-		 * @see OrderByField#index(int)
-		 */
-		SelectOrdered orderBy(int... indexes);
 
 		/**
 		 * Add one or more {@link OrderByField order by fields}.
