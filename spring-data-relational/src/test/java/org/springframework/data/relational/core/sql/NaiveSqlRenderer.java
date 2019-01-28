@@ -19,7 +19,6 @@ import java.util.OptionalLong;
 import java.util.Stack;
 import java.util.function.Consumer;
 
-import org.springframework.data.spel.spi.Function;
 import org.springframework.util.Assert;
 
 /**
@@ -115,10 +114,23 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		class SelectListVisitor implements Visitor {
-
+		class ListVisitor {
 			boolean firstColumn = true;
 			boolean inColumn = false;
+
+			protected void onColumnStart() {
+				if (inColumn) {
+					return;
+				}
+				inColumn = true;
+				if (!firstColumn) {
+					builder.append(", ");
+				}
+				firstColumn = false;
+
+			}
+		}
+		class SelectListVisitor extends ListVisitor implements Visitor {
 
 			@Override
 			public void enter(Visitable segment) {
@@ -145,17 +157,6 @@ public class NaiveSqlRenderer {
 				}
 
 			}
-
-			private void onColumnStart() {
-				if (inColumn) {
-					return;
-				}
-				inColumn = true;
-				if (!firstColumn) {
-					builder.append(", ");
-				}
-				firstColumn = false;
-			}
 		}
 
 		private class FromClauseVisitor implements Visitor {
@@ -173,7 +174,7 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class OrderByClauseVisitor implements Visitor {
+		private class OrderByClauseVisitor extends ListVisitor implements Visitor {
 
 			@Override
 			public void enter(Visitable segment) {
@@ -184,12 +185,17 @@ public class NaiveSqlRenderer {
 			public void leave(Visitable segment) {
 
 				if (segment instanceof Column) {
+					onColumnStart();
 					builder.append(((Column) segment).getReferenceName());
 				}
 
 				if (segment instanceof OrderByField) {
-					builder.append(" ") //
-							.append(((OrderByField) segment).getDirection());
+					OrderByField field = (OrderByField) segment;
+					if (field.getDirection() != null) {
+						builder.append(" ") //
+								.append(field.getDirection());
+					}
+					inColumn = false;
 				}
 			}
 		}
