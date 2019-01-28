@@ -82,6 +82,22 @@ public class NaiveSqlRenderer {
 
 		@Override
 		public void enter(Visitable segment) {
+			if (segment instanceof Select) {
+				builder.append("SELECT ");
+				visitors.push(new SelectListVisitor());
+			}
+			if (segment instanceof From) {
+				visitors.pop();
+				builder.append(" FROM ");
+				visitors.push(new FromClauseVisitor());
+			}
+			if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
+
+				visitors.pop();
+				builder.append(" ORDER BY ");
+				visitors.push(new OrderByClauseVisitor());
+			}
+
 			visitors.peek().enter(segment);
 		}
 
@@ -94,10 +110,7 @@ public class NaiveSqlRenderer {
 
 			@Override
 			public void enter(Visitable segment) {
-				if (segment instanceof Select) {
-					builder.append("SELECT ");
-					visitors.push(new SelectListVisitor());
-				}
+
 			}
 		}
 
@@ -110,8 +123,6 @@ public class NaiveSqlRenderer {
 			public void enter(Visitable segment) {
 				if (segment instanceof From) {
 					visitors.pop();
-					visitors.push(new FromClauseVisitor());
-					visitors.peek().enter(segment);
 				}
 			}
 
@@ -142,11 +153,7 @@ public class NaiveSqlRenderer {
 
 		private class FromClauseVisitor implements Visitor {
 			@Override
-			public void enter(Visitable segment) {
-				if (segment instanceof From) {
-					builder.append(" FROM ");
-				}
-			}
+			public void enter(Visitable segment) {}
 
 			@Override
 			public void leave(Visitable segment) {
@@ -155,6 +162,27 @@ public class NaiveSqlRenderer {
 					if (segment instanceof Table.AliasedTable) {
 						builder.append(" AS ").append(((Table.AliasedTable) segment).getAlias());
 					}
+				}
+			}
+		}
+
+		private class OrderByClauseVisitor implements Visitor {
+
+			@Override
+			public void enter(Visitable segment) {
+
+			}
+
+			@Override
+			public void leave(Visitable segment) {
+
+				if (segment instanceof Column) {
+					builder.append(((Column) segment).getReferenceName());
+				}
+
+				if (segment instanceof OrderByField) {
+					builder.append(" ") //
+							.append(((OrderByField) segment).getDirection());
 				}
 			}
 		}
