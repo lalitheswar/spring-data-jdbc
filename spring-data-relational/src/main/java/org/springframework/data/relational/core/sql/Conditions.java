@@ -46,6 +46,10 @@ public abstract class Conditions {
 	private Conditions() {
 	}
 
+	public static Condition isNull(Expression expression) {
+		return new IsNull(expression);
+	}
+
 	static class ConstantCondition extends AbstractSegment implements Condition {
 
 		private final String condition;

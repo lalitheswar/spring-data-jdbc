@@ -17,7 +17,6 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.OptionalLong;
 import java.util.Stack;
-import java.util.function.Consumer;
 
 import org.springframework.util.Assert;
 
@@ -88,6 +87,7 @@ public class NaiveSqlRenderer {
 				visitors.push(new SelectListVisitor());
 			}
 			if (segment instanceof From) {
+
 				visitors.pop();
 				builder.append(" FROM ");
 				visitors.push(new FromClauseVisitor());
@@ -98,6 +98,11 @@ public class NaiveSqlRenderer {
 				builder.append(" ORDER BY ");
 				visitors.push(new OrderByClauseVisitor());
 			}
+			if (segment instanceof Where) {
+				visitors.pop();
+				builder.append(" WHERE ");
+				visitors.push(new WhereClauseVisitor());
+			}
 
 			visitors.peek().enter(segment);
 		}
@@ -107,11 +112,11 @@ public class NaiveSqlRenderer {
 			if (segment instanceof Select) {
 				OptionalLong limit = ((Select) segment).getLimit();
 				if (limit.isPresent())
-				builder.append(" LIMIT ").append(limit.getAsLong());
+					builder.append(" LIMIT ").append(limit.getAsLong());
 
 				OptionalLong offset = ((Select) segment).getOffset();
 				if (offset.isPresent())
-				builder.append(" OFFSET ").append(offset.getAsLong());
+					builder.append(" OFFSET ").append(offset.getAsLong());
 			} else {
 				visitors.peek().leave(segment);
 			}
@@ -201,7 +206,6 @@ public class NaiveSqlRenderer {
 		private class JoinVisitor implements Visitor {
 			boolean inCondition = false;
 
-
 			@Override
 			public void enter(Visitable segment) {
 				if (segment instanceof Table && !inCondition) {
@@ -221,6 +225,47 @@ public class NaiveSqlRenderer {
 				if (segment instanceof Join) {
 					visitors.pop();
 				}
+			}
+		}
+
+		private class WhereClauseVisitor implements Visitor {
+			@Override
+			public void enter(Visitable segment) {
+				if (segment instanceof IsNull) {
+					visitors.push(new ExpressionVisitor());
+				}
+			}
+
+			@Override
+			public void leave(Visitable segment) {
+				if (segment instanceof IsNull) {
+					builder.append(" IS NULL");
+				}
+			}
+		}
+
+		private class ExpressionVisitor implements Visitor {
+			@Override
+			public void enter(Visitable segment) {
+				if (segment instanceof Column) {
+					builder.append(((Column) segment).getTable().getName()) //
+							.append('.') //
+							.append(((Column) segment).getName());
+
+				}
+			}
+
+			@Override
+			public void leave(Visitable segment) {
+				visitors.pop();
+			}
+		}
+
+		private class SkipVisitor implements Visitor {
+
+			@Override
+			public void enter(Visitable segment) {
+
 			}
 		}
 

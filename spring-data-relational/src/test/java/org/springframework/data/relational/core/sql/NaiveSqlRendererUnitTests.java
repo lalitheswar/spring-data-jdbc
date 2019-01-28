@@ -152,4 +152,18 @@ public class NaiveSqlRendererUnitTests {
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo LIMIT 10 OFFSET 20");
 	}
+
+	@Test // DATAJDBC-309
+	public void shouldRenderIsNull() {
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
+
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isNull(bar)).build();
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IS NULL");
+	}
+
+	@Test // DATAJDBC-309
+	public void shouldRenderNotNull() {
+
+	}
 }
