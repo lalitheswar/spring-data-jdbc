@@ -22,7 +22,8 @@ import java.util.function.Consumer;
 import org.springframework.util.Assert;
 
 /**
- * Naive SQL renderer that does not consider dialect specifics. This class is to evaluate requirements of a SQL renderer.
+ * Naive SQL renderer that does not consider dialect specifics. This class is to evaluate requirements of a SQL
+ * renderer.
  *
  * @author Mark Paluch
  */
@@ -64,10 +65,99 @@ public class NaiveSqlRenderer {
 	 */
 	public String render() {
 
-		RenderVisitor visitor = new RenderVisitor();
+		DelegatingVisitor visitor = new DelegatingVisitor();
 		select.visit(visitor);
 
 		return visitor.builder.toString();
+	}
+
+	static class DelegatingVisitor implements Visitor {
+
+		Stack<Visitor> visitors = new Stack<>();
+		StringBuilder builder = new StringBuilder();
+
+		{
+			visitors.push(new SelectVisitor());
+		}
+
+		@Override
+		public void enter(Visitable segment) {
+			visitors.peek().enter(segment);
+		}
+
+		@Override
+		public void leave(Visitable segment) {
+			visitors.peek().leave(segment);
+		}
+
+		class SelectVisitor implements Visitor {
+
+			@Override
+			public void enter(Visitable segment) {
+				if (segment instanceof Select) {
+					builder.append("SELECT ");
+					visitors.push(new SelectListVisitor());
+				}
+			}
+		}
+
+		class SelectListVisitor implements Visitor {
+
+			boolean firstColumn = true;
+			boolean inColumn = false;
+
+			@Override
+			public void enter(Visitable segment) {
+				if (segment instanceof From) {
+					visitors.pop();
+					visitors.push(new FromClauseVisitor());
+					visitors.peek().enter(segment);
+				}
+			}
+
+			@Override
+			public void leave(Visitable segment) {
+				onColumnStart();
+				if (segment instanceof Table) {
+					builder.append(((Table) segment).getReferenceName()).append('.');
+				} else if (segment instanceof Column) {
+					builder.append(((Column) segment).getName());
+					if (segment instanceof Column.AliasedColumn) {
+						builder.append(" AS ").append(((Column.AliasedColumn) segment).getAlias());
+					}
+				}
+
+			}
+
+			private void onColumnStart() {
+				if (inColumn) {
+					return;
+				}
+				inColumn = true;
+				if (!firstColumn) {
+					builder.append(", ");
+				}
+			}
+		}
+
+		private class FromClauseVisitor implements Visitor {
+			@Override
+			public void enter(Visitable segment) {
+				if (segment instanceof From) {
+					builder.append(" FROM ");
+				}
+			}
+
+			@Override
+			public void leave(Visitable segment) {
+				if (segment instanceof Table) {
+					builder.append(((Table) segment).getName());
+					if (segment instanceof Table.AliasedTable) {
+						builder.append(" AS ").append(((Table.AliasedTable) segment).getAlias());
+					}
+				}
+			}
+		}
 	}
 
 	/**
