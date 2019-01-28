@@ -19,6 +19,7 @@ import java.util.OptionalLong;
 import java.util.Stack;
 import java.util.function.Consumer;
 
+import org.springframework.data.spel.spi.Function;
 import org.springframework.util.Assert;
 
 /**
@@ -121,16 +122,21 @@ public class NaiveSqlRenderer {
 
 			@Override
 			public void enter(Visitable segment) {
-				if (segment instanceof From) {
-					visitors.pop();
+				if (segment instanceof SimpleFunction) {
+					onColumnStart();
+					builder.append(((SimpleFunction) segment).getFunctionName()).append("(");
 				}
 			}
 
 			@Override
 			public void leave(Visitable segment) {
 				onColumnStart();
+
 				if (segment instanceof Table) {
 					builder.append(((Table) segment).getReferenceName()).append('.');
+				} else if (segment instanceof SimpleFunction) {
+					builder.append(")");
+					inColumn = false;
 				} else if (segment instanceof Column) {
 					builder.append(((Column) segment).getName());
 					if (segment instanceof Column.AliasedColumn) {
@@ -148,6 +154,7 @@ public class NaiveSqlRenderer {
 				if (!firstColumn) {
 					builder.append(", ");
 				}
+				firstColumn = false;
 			}
 		}
 
