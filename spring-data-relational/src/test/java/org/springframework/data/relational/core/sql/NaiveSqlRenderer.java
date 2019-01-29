@@ -65,15 +65,20 @@ public class NaiveSqlRenderer {
 	 */
 	public String render() {
 
-		DelegatingVisitor visitor = new DelegatingVisitor();
+		SelectStatementVisitor visitor = new SelectStatementVisitor();
 		select.visit(visitor);
 
 		return visitor.builder.toString();
 	}
 
-	static class DelegatingVisitor implements Visitor {
+	interface ValuedVisitor extends Visitor {
+		String getValue();
+	}
+
+	static class SelectStatementVisitor implements Visitor {
 
 		private Stack<Visitor> visitors = new Stack<>();
+		@Deprecated
 		private StringBuilder builder = new StringBuilder();
 		private ValuedVisitor valueVisitor;
 
@@ -128,6 +133,7 @@ public class NaiveSqlRenderer {
 			}
 		}
 
+
 		class SelectVisitor implements Visitor {
 
 			@Override
@@ -136,9 +142,6 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		interface ValuedVisitor extends Visitor {
-			String getValue();
-		}
 
 		class ListVisitor {
 			private boolean firstColumn = true;
