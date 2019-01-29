@@ -78,8 +78,7 @@ public class NaiveSqlRenderer {
 	static class SelectStatementVisitor implements Visitor {
 
 		private Stack<Visitor> visitors = new Stack<>();
-		@Deprecated
-		private StringBuilder builder = new StringBuilder();
+		@Deprecated private StringBuilder builder = new StringBuilder();
 		private ValuedVisitor valueVisitor;
 
 		{
@@ -133,6 +132,105 @@ public class NaiveSqlRenderer {
 			}
 		}
 
+		/**
+		 * Handles a sequence of {@link Visitable} until encountering the first that does not matches the expectations. When
+		 * a not matching element is encountered it pops itself from the stack and delegates the call to the now top most
+		 * element of the stack.
+		 */
+		abstract class ReadWhileMatchesVisitor implements Visitor {
+
+			private Visitable currentSegment = null;
+
+			abstract boolean matches(Visitable segment);
+
+			abstract void enterMatched(Visitable segment);
+
+			abstract void enterSub(Visitable segment);
+
+			abstract void leaveMatched(Visitable segment);
+
+			abstract void leaveSub(Visitable segment);
+
+			@Override
+			public void enter(Visitable segment) {
+
+				if (currentSegment == null) {
+
+					if (matches(segment)) {
+
+						currentSegment = segment;
+						enterMatched(segment);
+					} else {
+
+						Visitor popped = visitors.pop();
+
+						Assert.isTrue(popped == this, "Popped the wrong visitor from the stack!");
+
+						visitors.peek().enter(segment);
+					}
+
+				} else {
+					enterSub(segment);
+				}
+			}
+
+			@Override
+			public void leave(Visitable segment) {
+
+				Assert.notNull(currentSegment);
+				if (segment == currentSegment) {
+
+					currentSegment = null;
+					leaveMatched(segment);
+				} else {
+					leaveSub(segment);
+				}
+			}
+		}
+
+		/**
+		 * Visits exactly one element that must match the expectations as defined in {@link #matches(Visitable)}. Ones
+		 * handled it pops itself from the stack.
+		 */
+		abstract class ReadOneVisitor implements Visitor {
+
+			private Visitable currentSegment;
+
+			abstract boolean matches(Visitable segment);
+
+			abstract void enterMatched(Visitable segment);
+			abstract void enterSub(Visitable segment);
+
+			abstract void leaveMatched(Visitable segment);
+
+			abstract void leaveSub(Visitable segment);
+
+			@Override
+			public void enter(Visitable segment) {
+
+				if (currentSegment == null) {
+
+					Assert.isTrue(matches(segment));
+
+					currentSegment = segment;
+					enterMatched(segment);
+				} else {
+					enterSub(segment);
+				}
+			}
+
+			@Override
+			public void leave(Visitable segment) {
+
+				if (segment == currentSegment) {
+					leaveMatched(segment);
+					Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
+				} else {
+					leaveSub(segment);
+				}
+
+			}
+		}
 
 		class SelectVisitor implements Visitor {
 
@@ -141,7 +239,6 @@ public class NaiveSqlRenderer {
 
 			}
 		}
-
 
 		class ListVisitor {
 			private boolean firstColumn = true;
