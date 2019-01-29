@@ -260,7 +260,7 @@ public class NaiveSqlRenderer {
 					left = new ExpressionVisitor();
 					visitors.push(left);
 
-				} else if (segment instanceof Equals) {
+				} else if (segment instanceof Equals || segment instanceof In) {
 
 					left = new ExpressionVisitor();
 					right = new ExpressionVisitor();
@@ -303,6 +303,11 @@ public class NaiveSqlRenderer {
 
 					builder.append(left.getValue()).append(" = ").append(right.getValue());
 					visitors.pop();
+
+				} else if (segment instanceof In) {
+
+					builder.append(left.getValue()).append(" IN ").append("(").append(right.getValue()).append(")");
+					visitors.pop();
 				}
 			}
 
@@ -341,14 +346,6 @@ public class NaiveSqlRenderer {
 			@Override
 			public String getValue() {
 				return value;
-			}
-		}
-
-		private class SkipVisitor implements Visitor {
-
-			@Override
-			public void enter(Visitable segment) {
-
 			}
 		}
 

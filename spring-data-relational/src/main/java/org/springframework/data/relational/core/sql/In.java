@@ -18,8 +18,21 @@ package org.springframework.data.relational.core.sql;
 /**
  * @author Jens Schauder
  */
-public class In implements Condition {
+public class In extends AbstractSegment implements Condition {
+
+	private final Expression left;
+	private final Expression right;
+
 	public In(Expression left, Expression right) {
 
+		super(left, right);
+
+		this.left = left;
+		this.right = right;
+	}
+
+	@Override
+	public String toString() {
+		return left + " IN " + right;
 	}
 }
