@@ -32,32 +32,6 @@ import org.springframework.util.Assert;
 public class Functions {
 
 	/**
-	 * Creates a new {@link Distinct} function.
-	 *
-	 * @param columns columns to apply distinction, must not be {@literal null}.
-	 * @return the new {@link Distinct} for {@code columns}.
-	 */
-	public static Distinct distinct(Column... columns) {
-
-		Assert.notNull(columns, "Columns must not be null!");
-
-		return new Distinct(Arrays.asList(columns));
-	}
-
-	/**
-	 * Creates a new {@link Distinct} function.
-	 *
-	 * @param columns columns to apply distinction, must not be {@literal null}.
-	 * @return the new {@link Distinct} for {@code columns}.
-	 */
-	public static Distinct distinct(Collection<? extends Column> columns) {
-
-		Assert.notNull(columns, "Columns must not be null!");
-
-		return new Distinct(new ArrayList<>(columns));
-	}
-
-	/**
 	 * Creates a new {@code COUNT} function.
 	 *
 	 * @param columns columns to apply count, must not be {@literal null}.

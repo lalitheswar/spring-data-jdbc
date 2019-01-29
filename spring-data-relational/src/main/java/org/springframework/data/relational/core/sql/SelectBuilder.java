@@ -60,6 +60,13 @@ public interface SelectBuilder {
 	SelectAndFrom select(Collection<? extends Expression> expressions);
 
 	/**
+	 * Makes the select statement distinct
+	 *
+	 * @return {@code this} builder.
+	 */
+	SelectAndFrom distinct();
+
+	/**
 	 * Builder exposing {@code select} and {@code from} methods.
 	 */
 	interface SelectAndFrom extends SelectFrom {
@@ -90,6 +97,13 @@ public interface SelectBuilder {
 		 * @see Table#columns(String...)
 		 */
 		SelectFrom select(Collection<? extends Expression> expressions);
+
+		/**
+		 * Makes the select statement distinct
+		 *
+		 * @return {@code this} builder.
+		 */
+		SelectAndFrom distinct();
 
 		/**
 		 * Declare a {@link Table} to {@code SELECT … FROM}.

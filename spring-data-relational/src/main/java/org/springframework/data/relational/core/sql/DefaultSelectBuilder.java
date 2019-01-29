@@ -32,6 +32,7 @@ import org.springframework.data.relational.core.sql.SelectBuilder.SelectWhereAnd
  */
 class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAndJoin, SelectWhereAndOr {
 
+	private boolean distinct = false;
 	private List<Expression> selectList = new ArrayList<>();
 	private List<Table> from = new ArrayList<>();
 	private long limit = -1;
@@ -78,6 +79,12 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	@Override
 	public DefaultSelectBuilder select(Collection<? extends Expression> expressions) {
 		selectList.addAll(expressions);
+		return this;
+	}
+
+	@Override
+	public DefaultSelectBuilder distinct() {
+		distinct = true;
 		return this;
 	}
 
@@ -252,7 +259,7 @@ class DefaultSelectBuilder implements SelectBuilder, SelectAndFrom, SelectFromAn
 	 */
 	@Override
 	public Select build() {
-		DefaultSelect select = new DefaultSelect(selectList, from, limit, offset, joins, where, orderBy);
+		DefaultSelect select = new DefaultSelect(distinct, selectList, from, limit, offset, joins, where, orderBy);
 		SelectValidator.validate(select);
 		return select;
 	}

@@ -22,7 +22,6 @@ import java.util.OptionalLong;
  * Visiting order:
  * <ol>
  * <li>Self</li>
- * <li>{@link SelectTop top clause}</li>
  * <li>{@link Column SELECT columns} </li>
  * <li>{@link Table FROM tables} clause</li>
  * <li>{@link Join JOINs}</li>
@@ -59,4 +58,11 @@ public interface Select extends Segment, Visitable {
 	 * @return
 	 */
 	OptionalLong getOffset();
+
+	/**
+	 * Flag if this select is to return distinct rows.
+	 *
+	 * @return
+	 */
+	boolean isDistinct();
 }

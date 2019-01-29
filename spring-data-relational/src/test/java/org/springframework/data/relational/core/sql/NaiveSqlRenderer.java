@@ -92,11 +92,16 @@ public class NaiveSqlRenderer {
 		public void enter(Visitable segment) {
 
 			if (segment instanceof Select) {
+
+				builder.append("SELECT ");
+				if (((Select) segment).isDistinct()) {
+					builder.append("DISTINCT ");
+				}
 				visitors.push(selectListVisitor);
 			} else {
 				if (segment instanceof From) {
 
-					builder.append("SELECT ");
+
 					builder.append(selectListVisitor.getValue());
 
 					builder.append(" FROM ");
@@ -272,6 +277,7 @@ public class NaiveSqlRenderer {
 
 			private StringBuilder builder = new StringBuilder();
 			private boolean first = true;
+			private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for subelements.
 
 			@Override
 			boolean matches(Visitable segment) {
@@ -284,10 +290,11 @@ public class NaiveSqlRenderer {
 				if (!first) {
 					builder.append(", ");
 				}
-				if (segment instanceof Distinct) {
-					builder.append("DISTINCT ");
-				} else if (segment instanceof SimpleFunction) {
+				if (segment instanceof SimpleFunction) {
 					builder.append(((SimpleFunction) segment).getFunctionName()).append("(");
+					insideFunction = true;
+				} else {
+					insideFunction = false;
 				}
 			}
 
@@ -316,6 +323,18 @@ public class NaiveSqlRenderer {
 
 				if (segment instanceof Table) {
 					builder.append(((Table) segment).getReferenceName()).append('.');
+				}
+				if (insideFunction) {
+
+					if (segment instanceof SimpleFunction) {
+						builder.append(")");
+					} else if (segment instanceof Column) {
+						builder.append(((Column) segment).getName());
+						if (segment instanceof Column.AliasedColumn) {
+							builder.append(" AS ").append(((Column.AliasedColumn) segment).getAlias());
+						}
+						first = false;
+					}
 				}
 			}
 

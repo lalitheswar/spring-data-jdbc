@@ -29,6 +29,7 @@ import org.springframework.util.Assert;
  */
 class DefaultSelect implements Select {
 
+	private final boolean distinct;
 	private final List<Expression> selectList;
 	private final From from;
 	private final long limit;
@@ -37,9 +38,10 @@ class DefaultSelect implements Select {
 	private final @Nullable Where where;
 	private final List<OrderByField> orderBy;
 
-	DefaultSelect(List<Expression> selectList, List<Table> from, long limit, long offset,
+	DefaultSelect(boolean distinct, List<Expression> selectList, List<Table> from, long limit, long offset,
 				  List<Join> joins, @Nullable Condition where, List<OrderByField> orderBy) {
 
+		this.distinct = distinct;
 		this.selectList = new ArrayList<>(selectList);
 		this.from = new From(from);
 		this.limit = limit;
@@ -65,6 +67,11 @@ class DefaultSelect implements Select {
 	@Override
 	public OptionalLong getOffset() {
 		return offset == -1 ? OptionalLong.empty() : OptionalLong.of(offset);
+	}
+
+	@Override
+	public boolean isDistinct() {
+		return distinct;
 	}
 
 	/*

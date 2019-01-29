@@ -67,7 +67,7 @@ public class NaiveSqlRendererUnitTests {
 		Column foo = table.column("foo");
 		Column bar = table.column("bar");
 
-		Select select = Select.builder().select(Functions.distinct(foo, bar)).from(table).build();
+		Select select = Select.builder().distinct().select(foo, bar).from(table).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT DISTINCT bar.foo, bar.bar FROM bar");
 	}

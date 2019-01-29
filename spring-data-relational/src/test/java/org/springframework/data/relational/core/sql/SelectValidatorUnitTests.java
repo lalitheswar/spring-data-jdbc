@@ -54,7 +54,7 @@ public class SelectValidatorUnitTests {
 		Column column = SQL.table("table").column("foo");
 
 		assertThatThrownBy(() -> {
-			SQL.newSelect(Functions.distinct(column)).from(SQL.table("bar")).build();
+			SQL.newSelect(column).distinct().from(SQL.table("bar")).build();
 		}).isInstanceOf(IllegalStateException.class)
 				.hasMessageContaining("Required table [table] by a SELECT column not imported by FROM [bar] or JOIN []");
 	}
