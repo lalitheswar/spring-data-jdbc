@@ -261,26 +261,40 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		class SelectListVisitor extends ListVisitor implements Visitor {
+		class SelectListVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor{
+
+			private StringBuilder builder = new StringBuilder();
+			private boolean first = true;
 
 			@Override
-			public void enter(Visitable segment) {
-				onColumnStart();
+			boolean matches(Visitable segment) {
+				return segment instanceof Expression;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
+
+				if (!first) {
+					builder.append(", ");
+				}
 				if (segment instanceof Distinct) {
 					builder.append("DISTINCT ");
-				}
-				if (segment instanceof SimpleFunction) {
-					onColumnStart();
+				} else if (segment instanceof SimpleFunction) {
 					builder.append(((SimpleFunction) segment).getFunctionName()).append("(");
 				}
 			}
 
 			@Override
-			public void leave(Visitable segment) {
+			void enterSub(Visitable segment) {
 
-				if (segment instanceof Table) {
-					builder.append(((Table) segment).getReferenceName()).append('.');
-				} else if (segment instanceof SimpleFunction) {
+			}
+
+			@Override
+			void leaveMatched(Visitable segment) {
+
+				first = false;
+
+				if (segment instanceof SimpleFunction) {
 					builder.append(")");
 				} else if (segment instanceof Column) {
 					builder.append(((Column) segment).getName());
@@ -288,9 +302,22 @@ public class NaiveSqlRenderer {
 						builder.append(" AS ").append(((Column.AliasedColumn) segment).getAlias());
 					}
 				}
-				onColumnEnd();
 			}
 
+			@Override
+			void leaveSub(Visitable segment) {
+
+				if (segment instanceof Table) {
+					builder.append(((Table) segment).getReferenceName()).append('.');
+				}
+			}
+
+
+
+			@Override
+			public String getValue() {
+				return builder.toString();
+			}
 		}
 
 		private class FromClauseVisitor extends ListVisitor implements Visitor {
