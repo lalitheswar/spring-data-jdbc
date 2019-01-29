@@ -204,7 +204,6 @@ public class NaiveSqlRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
-	@Ignore
 	public void shouldRenderInSubselect() {
 
 		Table foo = SQL.table("foo");
@@ -217,6 +216,6 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, new SubselectExpression(subselect))).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar in (SELECT floo.bah FROM floo)");
 	}
 }
