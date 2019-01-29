@@ -188,6 +188,22 @@ public class NaiveSqlRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
+	public void shouldRendersAndOrConditionWithProperParentheses() {
+
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
+		Column baz = table.column("baz");
+
+		Select select = Select.builder().select(bar).from(table).where(
+				Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name"))
+				.or(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name2")))
+				.and(Conditions.isNull(baz))
+		).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE (foo.bar = :name OR foo.bar = :name2) AND foo.baz IS NULL");
+	}
+
+	@Test // DATAJDBC-309
 	@Ignore
 	public void shouldRenderInSubselect() {
 

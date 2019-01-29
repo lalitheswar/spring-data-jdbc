@@ -73,8 +73,9 @@ public class NaiveSqlRenderer {
 
 	static class DelegatingVisitor implements Visitor {
 
-		Stack<Visitor> visitors = new Stack<>();
-		StringBuilder builder = new StringBuilder();
+		private Stack<Visitor> visitors = new Stack<>();
+		private StringBuilder builder = new StringBuilder();
+		private ValuedVisitor valueVisitor;
 
 		{
 			visitors.push(new SelectVisitor());
@@ -82,26 +83,26 @@ public class NaiveSqlRenderer {
 
 		@Override
 		public void enter(Visitable segment) {
+
 			if (segment instanceof Select) {
 				builder.append("SELECT ");
 				visitors.push(new SelectListVisitor());
-			}
-			if (segment instanceof From) {
+			} else if (segment instanceof From) {
 
 				visitors.pop();
 				builder.append(" FROM ");
 				visitors.push(new FromClauseVisitor());
-			}
-			if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
+			} else if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
 				visitors.pop();
 				builder.append(" ORDER BY ");
 				visitors.push(new OrderByClauseVisitor());
-			}
-			if (segment instanceof Where) {
+			} else if (segment instanceof Where) {
+
 				visitors.pop();
 				builder.append(" WHERE ");
-				visitors.push(new ConditionVisitor());
+				valueVisitor = new ConditionVisitor();
+				visitors.push(valueVisitor);
 			}
 
 			visitors.peek().enter(segment);
@@ -109,7 +110,12 @@ public class NaiveSqlRenderer {
 
 		@Override
 		public void leave(Visitable segment) {
-			if (segment instanceof Select) {
+
+			if (segment instanceof Where) {
+
+				builder.append(valueVisitor.getValue());
+				visitors.pop();
+			} else if (segment instanceof Select) {
 				OptionalLong limit = ((Select) segment).getLimit();
 				if (limit.isPresent())
 					builder.append(" LIMIT ").append(limit.getAsLong());
@@ -128,6 +134,10 @@ public class NaiveSqlRenderer {
 			public void enter(Visitable segment) {
 
 			}
+		}
+
+		interface ValuedVisitor extends Visitor {
+			String getValue();
 		}
 
 		class ListVisitor {
@@ -228,17 +238,30 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class ConditionVisitor implements Visitor {
-			ExpressionVisitor left;
-			ExpressionVisitor right;
+		private class ConditionVisitor implements ValuedVisitor {
+
+			private StringBuilder builder = new StringBuilder();
+
+			ValuedVisitor left;
+			ValuedVisitor right;
 
 			@Override
 			public void enter(Visitable segment) {
-				if (segment instanceof IsNull) {
+
+				if (segment instanceof MultipleCondition) {
+
+					left = new ConditionVisitor();
+					right = new ConditionVisitor();
+					visitors.push(right);
+					visitors.push(left);
+
+				} else if (segment instanceof IsNull) {
+
 					left = new ExpressionVisitor();
 					visitors.push(left);
-				}
-				if (segment instanceof Equals) {
+
+				} else if (segment instanceof Equals) {
+
 					left = new ExpressionVisitor();
 					right = new ExpressionVisitor();
 					visitors.push(right);
@@ -249,23 +272,49 @@ public class NaiveSqlRenderer {
 			@Override
 			public void leave(Visitable segment) {
 
-				if (segment instanceof IsNull) {
+				if (segment instanceof AndCondition) {
 
-					builder.append(left.value);
+					builder.append(left.getValue()) //
+							.append(" AND ") //
+							.append(right.getValue());
+					visitors.pop();
+
+				} else if (segment instanceof OrCondition) {
+
+					builder.append("(") //
+							.append(left.getValue()) //
+							.append(" OR ") //
+							.append(right.getValue()) //
+							.append(")");
+					visitors.pop();
+
+				} else if (segment instanceof IsNull) {
+
+					builder.append(left.getValue());
 					if (((IsNull) segment).isNegated()) {
 						builder.append(" IS NOT NULL");
 					} else {
 						builder.append(" IS NULL");
 					}
+
+					visitors.pop();
+
 				} else if (segment instanceof Equals) {
-					builder.append(left.value).append(" = ").append(right.value);
+
+					builder.append(left.getValue()).append(" = ").append(right.getValue());
+					visitors.pop();
 				}
+			}
+
+			@Override
+			public String getValue() {
+				return builder.toString();
 			}
 		}
 
-		private class ExpressionVisitor implements Visitor {
+		private class ExpressionVisitor implements ValuedVisitor {
 
-			String value = "";
+			private String value = "";
 
 			@Override
 			public void enter(Visitable segment) {
@@ -287,6 +336,11 @@ public class NaiveSqlRenderer {
 				if (segment instanceof Column || segment instanceof BindMarker) {
 					visitors.pop();
 				}
+			}
+
+			@Override
+			public String getValue() {
+				return value;
 			}
 		}
 
