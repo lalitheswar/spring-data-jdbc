@@ -81,35 +81,41 @@ public class NaiveSqlRenderer {
 		@Deprecated private StringBuilder builder = new StringBuilder();
 		private ValuedVisitor valueVisitor;
 
+		private SelectListVisitor selectListVisitor = new SelectListVisitor();
+
 		{
-			visitors.push(new SelectVisitor());
+			visitors.push(this);
+			visitors.push(selectListVisitor);
 		}
 
 		@Override
 		public void enter(Visitable segment) {
 
 			if (segment instanceof Select) {
-				builder.append("SELECT ");
-				visitors.push(new SelectListVisitor());
-			} else if (segment instanceof From) {
+				visitors.push(selectListVisitor);
+			} else {
+				if (segment instanceof From) {
 
-				visitors.pop();
-				builder.append(" FROM ");
-				visitors.push(new FromClauseVisitor());
-			} else if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
+					builder.append("SELECT ");
+					builder.append(selectListVisitor.getValue());
 
-				visitors.pop();
-				builder.append(" ORDER BY ");
-				visitors.push(new OrderByClauseVisitor());
-			} else if (segment instanceof Where) {
+					builder.append(" FROM ");
+					visitors.push(new FromClauseVisitor());
+				} else if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
-				visitors.pop();
-				builder.append(" WHERE ");
-				valueVisitor = new ConditionVisitor();
-				visitors.push(valueVisitor);
+					visitors.pop();
+					builder.append(" ORDER BY ");
+					visitors.push(new OrderByClauseVisitor());
+				} else if (segment instanceof Where) {
+
+					visitors.pop();
+					builder.append(" WHERE ");
+					valueVisitor = new ConditionVisitor();
+					visitors.push(valueVisitor);
+				}
+
+				visitors.peek().enter(segment);
 			}
-
-			visitors.peek().enter(segment);
 		}
 
 		@Override
@@ -199,6 +205,7 @@ public class NaiveSqlRenderer {
 			abstract boolean matches(Visitable segment);
 
 			abstract void enterMatched(Visitable segment);
+
 			abstract void enterSub(Visitable segment);
 
 			abstract void leaveMatched(Visitable segment);
@@ -261,7 +268,7 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		class SelectListVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor{
+		class SelectListVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
 
 			private StringBuilder builder = new StringBuilder();
 			private boolean first = true;
@@ -311,8 +318,6 @@ public class NaiveSqlRenderer {
 					builder.append(((Table) segment).getReferenceName()).append('.');
 				}
 			}
-
-
 
 			@Override
 			public String getValue() {
