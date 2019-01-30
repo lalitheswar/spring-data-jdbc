@@ -365,6 +365,35 @@ public class NaiveSqlRenderer {
 			}
 		}
 
+		private class JoinVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+
+			private StringBuilder builder = new StringBuilder();
+			private JoinTableAndConditionVisitor subvisitor;
+
+			@Override
+			boolean matches(Visitable segment) {
+				return segment instanceof Join;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
+
+				subvisitor = new JoinTableAndConditionVisitor();
+				visitors.push(subvisitor);
+			}
+
+			@Override
+			void leaveMatched(Visitable segment) {
+				builder.append(" JOIN ").append(subvisitor.getValue());
+			}
+
+			@Override
+			public String getValue() {
+				return builder.toString();
+			}
+		}
+
+
 		private class JoinTableAndConditionVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
 
 			private final StringBuilder builder = new StringBuilder();
