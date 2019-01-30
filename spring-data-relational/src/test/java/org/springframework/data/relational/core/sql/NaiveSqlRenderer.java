@@ -103,29 +103,27 @@ public class NaiveSqlRenderer {
 				builder.append(" FROM ");
 				visitors.push(fromClauseVisitor);
 			} else if (segment instanceof Join) {
+
 				joinTableAndConditionVisitor = new JoinTableAndConditionVisitor();
 				visitors.push(joinTableAndConditionVisitor);
+			} else if (segment instanceof Where) {
+
+				builder.append(" WHERE ");
+				valueVisitor = new ConditionVisitor();
+				visitors.push(valueVisitor);
 			} else {
 				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
 					orderByClauseVisitor = new OrderByClauseVisitor();
 					visitors.push(orderByClauseVisitor);
-				} else if (segment instanceof Where) {
-
-					builder.append(" WHERE ");
-					valueVisitor = new ConditionVisitor();
-					visitors.push(valueVisitor);
 				}
 
-				System.out.println("delegating enter for " + segment);
 				visitors.peek().enter(segment);
 			}
 		}
 
 		@Override
 		public void leave(Visitable segment) {
-
-			System.out.println(String.format("leave: %s %s", segment, this));
 
 			if (segment instanceof From) {
 				builder.append(fromClauseVisitor.getValue());
@@ -179,7 +177,7 @@ public class NaiveSqlRenderer {
 
 			@Override
 			public void enter(Visitable segment) {
-				System.out.println(String.format("enter: %s \t %s", segment, this));
+
 				if (currentSegment == null) {
 
 					if (matches(segment)) {
@@ -203,7 +201,7 @@ public class NaiveSqlRenderer {
 
 			@Override
 			public void leave(Visitable segment) {
-				System.out.println(String.format("leave: %s \t %s", segment, this));
+
 				if (currentSegment == null) {
 					// we are receiving the leave event of the element above
 					visitors.pop();
@@ -257,32 +255,11 @@ public class NaiveSqlRenderer {
 				if (segment == currentSegment) {
 					leaveMatched(segment);
 					Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
+					System.out.println(String.format("popping %s next one is %s", this, visitors.peek()));
 				} else {
 					leaveSub(segment);
 				}
 
-			}
-		}
-
-		class ListVisitor {
-
-			private boolean firstColumn = true;
-			private boolean inColumn = false;
-
-			protected void onColumnStart() {
-				if (inColumn) {
-					return;
-				}
-				inColumn = true;
-				if (!firstColumn) {
-					builder.append(", ");
-				}
-				firstColumn = false;
-
-			}
-
-			protected void onColumnEnd() {
-				inColumn = false;
 			}
 		}
 
@@ -413,6 +390,7 @@ public class NaiveSqlRenderer {
 
 			@Override
 			void enterMatched(Visitable segment) {
+
 				if (segment instanceof Table && !inCondition) {
 					builder.append(((Table) segment).getName());
 					if (segment instanceof Table.AliasedTable) {
@@ -446,7 +424,7 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class ConditionVisitor implements ValuedVisitor {
+		private class ConditionVisitor extends ReadOneVisitor implements ValuedVisitor {
 
 			private StringBuilder builder = new StringBuilder();
 
@@ -454,7 +432,12 @@ public class NaiveSqlRenderer {
 			ValuedVisitor right;
 
 			@Override
-			public void enter(Visitable segment) {
+			boolean matches(Visitable segment) {
+				return segment instanceof Condition;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
 
 				if (segment instanceof MultipleCondition) {
 
@@ -478,14 +461,18 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public void leave(Visitable segment) {
+			void enterSub(Visitable segment) {
 
+			}
+
+			@Override
+			void leaveMatched(Visitable segment) {
+				System.out.println(String.format("leaving: %s %s", segment, this));
 				if (segment instanceof AndCondition) {
 
 					builder.append(left.getValue()) //
 							.append(" AND ") //
 							.append(right.getValue());
-					visitors.pop();
 
 				} else if (segment instanceof OrCondition) {
 
@@ -494,7 +481,6 @@ public class NaiveSqlRenderer {
 							.append(" OR ") //
 							.append(right.getValue()) //
 							.append(")");
-					visitors.pop();
 
 				} else if (segment instanceof IsNull) {
 
@@ -505,18 +491,19 @@ public class NaiveSqlRenderer {
 						builder.append(" IS NULL");
 					}
 
-					visitors.pop();
-
 				} else if (segment instanceof Equals) {
 
 					builder.append(left.getValue()).append(" = ").append(right.getValue());
-					visitors.pop();
 
 				} else if (segment instanceof In) {
 
 					builder.append(left.getValue()).append(" IN ").append("(").append(right.getValue()).append(")");
-					visitors.pop();
 				}
+			}
+
+			@Override
+			void leaveSub(Visitable segment) {
+
 			}
 
 			@Override
@@ -525,12 +512,17 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class ExpressionVisitor implements ValuedVisitor {
+		private class ExpressionVisitor extends ReadOneVisitor implements ValuedVisitor {
 
 			private String value = "";
 
 			@Override
-			public void enter(Visitable segment) {
+			boolean matches(Visitable segment) {
+				return segment instanceof Expression;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
 
 				if (segment instanceof Column) {
 					value = ((Column) segment).getTable().getName() + "." + ((Column) segment).getName();
@@ -544,12 +536,20 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public void leave(Visitable segment) {
+			void enterSub(Visitable segment) {
 
-				if (segment instanceof Column || segment instanceof BindMarker) {
-					visitors.pop();
-				}
 			}
+
+			@Override
+			void leaveMatched(Visitable segment) {
+
+			}
+
+			@Override
+			void leaveSub(Visitable segment) {
+
+			}
+
 
 			@Override
 			public String getValue() {
