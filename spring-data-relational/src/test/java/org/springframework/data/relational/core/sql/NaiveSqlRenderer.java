@@ -86,6 +86,8 @@ public class NaiveSqlRenderer {
 		private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor();
 		private OrderByClauseVisitor orderByClauseVisitor = new OrderByClauseVisitor();
 
+		private SelectStatementVisitor selectStatementVisitor = new SelectStatementVisitor();
+
 		{
 			visitors.push(this);
 			visitors.push(orderByClauseVisitor);
@@ -130,12 +132,14 @@ public class NaiveSqlRenderer {
 				}
 
 				OptionalLong limit = ((Select) segment).getLimit();
-				if (limit.isPresent())
+				if (limit.isPresent()) {
 					builder.append(" LIMIT ").append(limit.getAsLong());
+				}
 
 				OptionalLong offset = ((Select) segment).getOffset();
-				if (offset.isPresent())
+				if (offset.isPresent()) {
 					builder.append(" OFFSET ").append(offset.getAsLong());
+				}
 			} else {
 				visitors.peek().leave(segment);
 			}
@@ -263,6 +267,7 @@ public class NaiveSqlRenderer {
 			@Override
 			void enterMatched(Visitable segment) {
 
+				visitors.push(orderByClauseVisitor);
 				visitors.push(whereClauseVisitor);
 				visitors.push(joinVisitor);
 				visitors.push(fromClauseVisitor);
@@ -280,6 +285,17 @@ public class NaiveSqlRenderer {
 				builder.append(selectListVisitor.getValue()).append(fromClauseVisitor.getValue())
 						.append(joinVisitor.getValue());
 
+				builder.append(orderByClauseVisitor.getValue());
+
+				OptionalLong limit = ((Select) segment).getLimit();
+				if (limit.isPresent()) {
+					builder.append(" LIMIT ").append(limit.getAsLong());
+				}
+
+				OptionalLong offset = ((Select) segment).getOffset();
+				if (offset.isPresent()) {
+					builder.append(" OFFSET ").append(offset.getAsLong());
+				}
 			}
 		}
 
