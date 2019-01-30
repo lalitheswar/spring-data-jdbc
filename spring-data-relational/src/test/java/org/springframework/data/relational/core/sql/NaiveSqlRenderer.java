@@ -79,7 +79,7 @@ public class NaiveSqlRenderer {
 
 		private Stack<Visitor> visitors = new Stack<>();
 		private StringBuilder builder = new StringBuilder();
-		private ValuedVisitor valueVisitor;
+		private ValuedVisitor valueVisitor = new ConditionVisitor();
 
 		private SelectListVisitor selectListVisitor = new SelectListVisitor();
 		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
@@ -110,10 +110,10 @@ public class NaiveSqlRenderer {
 
 				joinTableAndConditionVisitor = new JoinTableAndConditionVisitor();
 				visitors.push(joinTableAndConditionVisitor);
+
 			} else if (segment instanceof Where) {
 
 				builder.append(" WHERE ");
-				valueVisitor = new ConditionVisitor();
 				visitors.push(valueVisitor);
 			} else {
 				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
