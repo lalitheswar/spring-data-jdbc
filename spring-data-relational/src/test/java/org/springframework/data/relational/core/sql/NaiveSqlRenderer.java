@@ -101,7 +101,6 @@ public class NaiveSqlRenderer {
 			} else {
 				if (segment instanceof From) {
 
-
 					builder.append(selectListVisitor.getValue());
 
 					builder.append(" FROM ");
@@ -240,14 +239,6 @@ public class NaiveSqlRenderer {
 				} else {
 					leaveSub(segment);
 				}
-
-			}
-		}
-
-		class SelectVisitor implements Visitor {
-
-			@Override
-			public void enter(Visitable segment) {
 
 			}
 		}
