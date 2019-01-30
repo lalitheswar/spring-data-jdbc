@@ -79,17 +79,16 @@ public class NaiveSqlRenderer {
 
 		private Stack<Visitor> visitors = new Stack<>();
 		private StringBuilder builder = new StringBuilder();
-		private ValuedVisitor conditionVisitor = new ConditionVisitor();
 
 		private SelectListVisitor selectListVisitor = new SelectListVisitor();
 		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
-		private JoinTableAndConditionVisitor joinTableAndConditionVisitor;
 		private JoinVisitor joinVisitor = new JoinVisitor();
+		private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor();
 		private OrderByClauseVisitor orderByClauseVisitor;
 
 		{
 			visitors.push(this);
-			visitors.push(conditionVisitor);
+			visitors.push(whereClauseVisitor);
 			visitors.push(joinVisitor);
 			visitors.push(fromClauseVisitor);
 			visitors.push(selectListVisitor);
@@ -109,9 +108,6 @@ public class NaiveSqlRenderer {
 
 				builder.append(selectListVisitor.getValue());
 
-			} else if (segment instanceof Where) {
-
-				builder.append(" WHERE ");
 			} else {
 				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
@@ -130,11 +126,6 @@ public class NaiveSqlRenderer {
 
 				builder.append(" FROM ");
 				builder.append(fromClauseVisitor.getValue());
-
-			} else if (segment instanceof Where) {
-
-				builder.append(conditionVisitor.getValue());
-				visitors.pop();
 
 			} else if (segment instanceof Select) {
 
@@ -273,8 +264,7 @@ public class NaiveSqlRenderer {
 			@Override
 			void enterMatched(Visitable segment) {
 
-
-				visitors.push(conditionVisitor);
+				visitors.push(whereClauseVisitor);
 				visitors.push(joinVisitor);
 				visitors.push(fromClauseVisitor);
 				visitors.push(selectListVisitor);
@@ -458,6 +448,35 @@ public class NaiveSqlRenderer {
 			}
 		}
 
+		private class WhereClauseVisitor extends ReadOneVisitor implements ValuedVisitor {
+
+			private ValuedVisitor conditionVisitor = new ConditionVisitor();
+			private StringBuilder internal = new StringBuilder();
+
+			@Override
+			boolean matches(Visitable segment) {
+				return segment instanceof Where;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
+
+				internal.append(" WHERE ");
+				visitors.push(conditionVisitor);
+			}
+
+			@Override
+			void leaveMatched(Visitable segment) {
+
+				internal.append(conditionVisitor.getValue());
+				builder.append(internal);
+			}
+
+			@Override
+			public String getValue() {
+				return internal.toString();
+			}
+		}
 		private class ConditionVisitor extends ReadOneVisitor implements ValuedVisitor {
 
 			private StringBuilder builder = new StringBuilder();
