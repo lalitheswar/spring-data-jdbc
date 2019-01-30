@@ -110,10 +110,6 @@ public class NaiveSqlRenderer {
 				builder.append(selectListVisitor.getValue());
 
 			} else {
-				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
-
-				}
-
 				visitors.peek().enter(segment);
 			}
 		}
