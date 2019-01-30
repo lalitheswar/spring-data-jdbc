@@ -84,6 +84,7 @@ public class NaiveSqlRenderer {
 		private SelectListVisitor selectListVisitor = new SelectListVisitor();
 		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
 		private JoinTableAndConditionVisitor joinTableAndConditionVisitor;
+		private OrderByClauseVisitor orderByClauseVisitor;
 
 		@Override
 		public void enter(Visitable segment) {
@@ -107,12 +108,10 @@ public class NaiveSqlRenderer {
 			} else {
 				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
-					visitors.pop();
-					builder.append(" ORDER BY ");
-					visitors.push(new OrderByClauseVisitor());
+					orderByClauseVisitor = new OrderByClauseVisitor();
+					visitors.push(orderByClauseVisitor);
 				} else if (segment instanceof Where) {
 
-					visitors.pop();
 					builder.append(" WHERE ");
 					valueVisitor = new ConditionVisitor();
 					visitors.push(valueVisitor);
@@ -138,7 +137,14 @@ public class NaiveSqlRenderer {
 
 				builder.append(" JOIN ");
 				builder.append(joinTableAndConditionVisitor.getValue());
-			} else	if (segment instanceof Select) {
+			} else if (segment instanceof Select) {
+
+				if (orderByClauseVisitor != null) {
+
+					builder.append(" ORDER BY ");
+					builder.append(orderByClauseVisitor.getValue());
+				}
+
 				OptionalLong limit = ((Select) segment).getLimit();
 				if (limit.isPresent())
 					builder.append(" LIMIT ").append(limit.getAsLong());
@@ -356,7 +362,6 @@ public class NaiveSqlRenderer {
 
 			private final StringBuilder builder = new StringBuilder();
 			private boolean first = true;
-			private JoinTableAndConditionVisitor joinTableAndConditionVisitor;
 
 			@Override
 			boolean matches(Visitable segment) {
@@ -552,29 +557,51 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class OrderByClauseVisitor extends ListVisitor implements Visitor {
+		private class OrderByClauseVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+
+			StringBuilder builder = new StringBuilder();
+			boolean first = true;
 
 			@Override
-			public void enter(Visitable segment) {
-				onColumnStart();
+			boolean matches(Visitable segment) {
+				return segment instanceof OrderByField;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
+				if (!first) {
+					builder.append(", ");
+				}
+				first = false;
+			}
+
+			@Override
+			void enterSub(Visitable segment) {
 
 			}
 
 			@Override
-			public void leave(Visitable segment) {
+			void leaveMatched(Visitable segment) {
+
+				OrderByField field = (OrderByField) segment;
+
+				if (field.getDirection() != null) {
+					builder.append(" ") //
+							.append(field.getDirection());
+				}
+			}
+
+			@Override
+			void leaveSub(Visitable segment) {
 
 				if (segment instanceof Column) {
 					builder.append(((Column) segment).getReferenceName());
 				}
+			}
 
-				if (segment instanceof OrderByField) {
-					OrderByField field = (OrderByField) segment;
-					if (field.getDirection() != null) {
-						builder.append(" ") //
-								.append(field.getDirection());
-					}
-				}
-				onColumnEnd();
+			@Override
+			public String getValue() {
+				return builder.toString();
 			}
 		}
 
