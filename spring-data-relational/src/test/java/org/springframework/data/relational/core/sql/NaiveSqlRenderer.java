@@ -95,12 +95,11 @@ public class NaiveSqlRenderer {
 				if (((Select) segment).isDistinct()) {
 					builder.append("DISTINCT ");
 				}
-				visitors.push(selectListVisitor); // ???
+				visitors.push(selectListVisitor);
 			} else if (segment instanceof From) {
 
 				builder.append(selectListVisitor.getValue());
 
-				builder.append(" FROM ");
 				visitors.push(fromClauseVisitor);
 			} else if (segment instanceof Join) {
 
@@ -126,6 +125,7 @@ public class NaiveSqlRenderer {
 		public void leave(Visitable segment) {
 
 			if (segment instanceof From) {
+				builder.append(" FROM ");
 				builder.append(fromClauseVisitor.getValue());
 			} else if (segment instanceof Where) {
 
