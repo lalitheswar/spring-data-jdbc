@@ -65,7 +65,7 @@ public class NaiveSqlRenderer {
 	 */
 	public String render() {
 
-		SelectStatementVisitor visitor = new SelectStatementVisitor();
+		StackbasedVisitor visitor = new StackbasedVisitor();
 		select.visit(visitor);
 
 		return visitor.builder.toString();
@@ -75,7 +75,7 @@ public class NaiveSqlRenderer {
 		String getValue();
 	}
 
-	static class SelectStatementVisitor implements Visitor {
+	static class StackbasedVisitor implements Visitor {
 
 		private Stack<Visitor> visitors = new Stack<>();
 		private StringBuilder builder = new StringBuilder();
@@ -89,6 +89,7 @@ public class NaiveSqlRenderer {
 
 		{
 			visitors.push(this);
+			visitors.push(conditionVisitor);
 			visitors.push(joinVisitor);
 			visitors.push(fromClauseVisitor);
 			visitors.push(selectListVisitor);
@@ -111,7 +112,6 @@ public class NaiveSqlRenderer {
 			} else if (segment instanceof Where) {
 
 				builder.append(" WHERE ");
-				visitors.push(conditionVisitor);
 			} else {
 				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
@@ -263,6 +263,38 @@ public class NaiveSqlRenderer {
 			}
 		}
 
+		class SelectStatementVisitor extends ReadOneVisitor {
+
+			@Override
+			boolean matches(Visitable segment) {
+				return segment instanceof Select;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
+
+
+				visitors.push(conditionVisitor);
+				visitors.push(joinVisitor);
+				visitors.push(fromClauseVisitor);
+				visitors.push(selectListVisitor);
+			}
+
+			@Override
+			void leaveMatched(Visitable segment) {
+
+				builder.append("SELECT ");
+				if (((Select) segment).isDistinct()) {
+					builder.append("DISTINCT ");
+				}
+
+				builder.append(selectListVisitor.getValue())
+						.append(fromClauseVisitor.getValue())
+				.append(joinVisitor.getValue());
+
+			}
+		}
+
 		class SelectListVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
 
 			private StringBuilder builder = new StringBuilder();
@@ -360,8 +392,9 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class JoinVisitor extends ReadWhileMatchesVisitor {
+		private class JoinVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
 
+			private StringBuilder internal = new StringBuilder();
 			private JoinTableAndConditionVisitor subvisitor;
 
 			@Override
@@ -378,7 +411,18 @@ public class NaiveSqlRenderer {
 
 			@Override
 			void leaveMatched(Visitable segment) {
-				builder.append(" JOIN ").append(subvisitor.getValue());
+				append(" JOIN ");
+				append(subvisitor.getValue());
+			}
+
+			@Override
+			public String getValue() {
+				return internal.toString();
+			}
+
+			void append(String s) {
+				internal.append(s);
+				builder.append(s);
 			}
 
 		}
