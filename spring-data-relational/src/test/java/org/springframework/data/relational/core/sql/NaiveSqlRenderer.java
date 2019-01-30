@@ -78,7 +78,7 @@ public class NaiveSqlRenderer {
 	static class SelectStatementVisitor implements Visitor {
 
 		private Stack<Visitor> visitors = new Stack<>();
-		@Deprecated private StringBuilder builder = new StringBuilder();
+		private StringBuilder builder = new StringBuilder();
 		private ValuedVisitor valueVisitor;
 
 		private SelectListVisitor selectListVisitor = new SelectListVisitor();
@@ -167,13 +167,13 @@ public class NaiveSqlRenderer {
 
 			abstract boolean matches(Visitable segment);
 
-			abstract void enterMatched(Visitable segment);
+			void enterMatched(Visitable segment) {}
 
-			abstract void enterSub(Visitable segment);
+			void enterSub(Visitable segment) {}
 
-			abstract void leaveMatched(Visitable segment);
+			void leaveMatched(Visitable segment) {}
 
-			abstract void leaveSub(Visitable segment);
+			void leaveSub(Visitable segment) {}
 
 			@Override
 			public void enter(Visitable segment) {
@@ -227,20 +227,20 @@ public class NaiveSqlRenderer {
 
 			abstract boolean matches(Visitable segment);
 
-			abstract void enterMatched(Visitable segment);
+			void enterMatched(Visitable segment) {}
 
-			abstract void enterSub(Visitable segment);
+			void enterSub(Visitable segment) {}
 
-			abstract void leaveMatched(Visitable segment);
+			void leaveMatched(Visitable segment) {}
 
-			abstract void leaveSub(Visitable segment);
+			void leaveSub(Visitable segment) {}
 
 			@Override
 			public void enter(Visitable segment) {
 
 				if (currentSegment == null) {
 
-					Assert.isTrue(matches(segment));
+					Assert.isTrue(matches(segment), "Unexpected, not matching segment " + segment);
 
 					currentSegment = segment;
 					enterMatched(segment);
@@ -287,11 +287,6 @@ public class NaiveSqlRenderer {
 				} else {
 					insideFunction = false;
 				}
-			}
-
-			@Override
-			void enterSub(Visitable segment) {
-
 			}
 
 			@Override
@@ -360,19 +355,6 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			void enterSub(Visitable segment) {
-
-			}
-
-			@Override
-			void leaveMatched(Visitable segment) {}
-
-			@Override
-			void leaveSub(Visitable segment) {
-
-			}
-
-			@Override
 			public String getValue() {
 				return builder.toString();
 			}
@@ -401,21 +383,6 @@ public class NaiveSqlRenderer {
 					builder.append(segment);
 					inCondition = true;
 				}
-			}
-
-			@Override
-			void enterSub(Visitable segment) {
-
-			}
-
-			@Override
-			void leaveMatched(Visitable segment) {
-
-			}
-
-			@Override
-			void leaveSub(Visitable segment) {
-
 			}
 
 			@Override
@@ -461,11 +428,6 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			void enterSub(Visitable segment) {
-
-			}
-
-			@Override
 			void leaveMatched(Visitable segment) {
 				System.out.println(String.format("leaving: %s %s", segment, this));
 				if (segment instanceof AndCondition) {
@@ -502,11 +464,6 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			void leaveSub(Visitable segment) {
-
-			}
-
-			@Override
 			public String getValue() {
 				return builder.toString();
 			}
@@ -536,22 +493,6 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			void enterSub(Visitable segment) {
-
-			}
-
-			@Override
-			void leaveMatched(Visitable segment) {
-
-			}
-
-			@Override
-			void leaveSub(Visitable segment) {
-
-			}
-
-
-			@Override
 			public String getValue() {
 				return value;
 			}
@@ -573,11 +514,6 @@ public class NaiveSqlRenderer {
 					builder.append(", ");
 				}
 				first = false;
-			}
-
-			@Override
-			void enterSub(Visitable segment) {
-
 			}
 
 			@Override
