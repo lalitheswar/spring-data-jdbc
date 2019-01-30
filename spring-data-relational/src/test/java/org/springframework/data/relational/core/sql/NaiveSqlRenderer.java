@@ -86,6 +86,12 @@ public class NaiveSqlRenderer {
 		private JoinTableAndConditionVisitor joinTableAndConditionVisitor;
 		private OrderByClauseVisitor orderByClauseVisitor;
 
+		{
+			visitors.push(this);
+			visitors.push(fromClauseVisitor);
+			visitors.push(selectListVisitor);
+		}
+
 		@Override
 		public void enter(Visitable segment) {
 
@@ -95,12 +101,11 @@ public class NaiveSqlRenderer {
 				if (((Select) segment).isDistinct()) {
 					builder.append("DISTINCT ");
 				}
-				visitors.push(selectListVisitor);
+
 			} else if (segment instanceof From) {
 
 				builder.append(selectListVisitor.getValue());
 
-				visitors.push(fromClauseVisitor);
 			} else if (segment instanceof Join) {
 
 				joinTableAndConditionVisitor = new JoinTableAndConditionVisitor();
