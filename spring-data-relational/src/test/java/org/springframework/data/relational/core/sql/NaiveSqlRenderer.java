@@ -84,10 +84,11 @@ public class NaiveSqlRenderer {
 		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
 		private JoinVisitor joinVisitor = new JoinVisitor();
 		private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor();
-		private OrderByClauseVisitor orderByClauseVisitor;
+		private OrderByClauseVisitor orderByClauseVisitor = new OrderByClauseVisitor();
 
 		{
 			visitors.push(this);
+			visitors.push(orderByClauseVisitor);
 			visitors.push(whereClauseVisitor);
 			visitors.push(joinVisitor);
 			visitors.push(fromClauseVisitor);
@@ -111,8 +112,6 @@ public class NaiveSqlRenderer {
 			} else {
 				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
-					orderByClauseVisitor = new OrderByClauseVisitor();
-					visitors.push(orderByClauseVisitor);
 				}
 
 				visitors.peek().enter(segment);
@@ -231,10 +230,14 @@ public class NaiveSqlRenderer {
 
 				if (currentSegment == null) {
 
-					Assert.isTrue(matches(segment), "Unexpected, not matching segment " + segment);
+					if (matches(segment)) {
 
-					currentSegment = segment;
-					enterMatched(segment);
+						currentSegment = segment;
+						enterMatched(segment);
+					} else {
+						Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
+						visitors.peek().enter(segment);
+					}
 				} else {
 					enterSub(segment);
 				}
@@ -243,10 +246,10 @@ public class NaiveSqlRenderer {
 			@Override
 			public void leave(Visitable segment) {
 
+				Assert.notNull(currentSegment);
 				if (segment == currentSegment) {
 					leaveMatched(segment);
 					Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
-					System.out.println(String.format("popping %s next one is %s", this, visitors.peek()));
 				} else {
 					leaveSub(segment);
 				}
@@ -278,9 +281,8 @@ public class NaiveSqlRenderer {
 					builder.append("DISTINCT ");
 				}
 
-				builder.append(selectListVisitor.getValue())
-						.append(fromClauseVisitor.getValue())
-				.append(joinVisitor.getValue());
+				builder.append(selectListVisitor.getValue()).append(fromClauseVisitor.getValue())
+						.append(joinVisitor.getValue());
 
 			}
 		}
@@ -477,6 +479,7 @@ public class NaiveSqlRenderer {
 				return internal.toString();
 			}
 		}
+
 		private class ConditionVisitor extends ReadOneVisitor implements ValuedVisitor {
 
 			private StringBuilder builder = new StringBuilder();
