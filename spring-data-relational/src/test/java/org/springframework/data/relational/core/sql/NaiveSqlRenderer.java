@@ -85,12 +85,6 @@ public class NaiveSqlRenderer {
 		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
 		private JoinTableAndConditionVisitor joinTableAndConditionVisitor;
 
-		{
-			visitors.push(this);
-			visitors.push(fromClauseVisitor); // ??
-			visitors.push(selectListVisitor); // ??
-		}
-
 		@Override
 		public void enter(Visitable segment) {
 
