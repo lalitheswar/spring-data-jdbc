@@ -65,26 +65,19 @@ public class NaiveSqlRenderer {
 	 */
 	public String render() {
 
-		StackbasedVisitor visitor = new StackbasedVisitor();
+		StackBasedVisitor visitor = new StackBasedVisitor();
 		select.visit(visitor);
 
-		return visitor.builder.toString();
+		return visitor.selectStatementVisitor.getValue();
 	}
 
 	interface ValuedVisitor extends Visitor {
 		String getValue();
 	}
 
-	static class StackbasedVisitor implements Visitor {
+	static class StackBasedVisitor implements Visitor {
 
 		private Stack<Visitor> visitors = new Stack<>();
-		private StringBuilder builder = new StringBuilder();
-
-		private SelectListVisitor selectListVisitor = new SelectListVisitor();
-		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
-		private JoinVisitor joinVisitor = new JoinVisitor();
-		private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor();
-		private OrderByClauseVisitor orderByClauseVisitor = new OrderByClauseVisitor();
 
 		private SelectStatementVisitor selectStatementVisitor = new SelectStatementVisitor();
 
@@ -221,7 +214,15 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		class SelectStatementVisitor extends ReadOneVisitor {
+		class SelectStatementVisitor extends ReadOneVisitor implements ValuedVisitor{
+
+			private StringBuilder builder = new StringBuilder();
+
+			private SelectListVisitor selectListVisitor = new SelectListVisitor();
+			private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
+			private JoinVisitor joinVisitor = new JoinVisitor();
+			private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor();
+			private OrderByClauseVisitor orderByClauseVisitor = new OrderByClauseVisitor();
 
 			@Override
 			boolean matches(Visitable segment) {
@@ -262,6 +263,11 @@ public class NaiveSqlRenderer {
 				if (offset.isPresent()) {
 					builder.append(" OFFSET ").append(offset.getAsLong());
 				}
+			}
+
+			@Override
+			public String getValue() {
+				return builder.toString();
 			}
 		}
 
