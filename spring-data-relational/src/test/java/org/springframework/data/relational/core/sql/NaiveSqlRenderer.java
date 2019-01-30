@@ -79,7 +79,7 @@ public class NaiveSqlRenderer {
 
 		private Stack<Visitor> visitors = new Stack<>();
 		private StringBuilder builder = new StringBuilder();
-		private ValuedVisitor valueVisitor = new ConditionVisitor();
+		private ValuedVisitor conditionVisitor = new ConditionVisitor();
 
 		private SelectListVisitor selectListVisitor = new SelectListVisitor();
 		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
@@ -111,7 +111,7 @@ public class NaiveSqlRenderer {
 			} else if (segment instanceof Where) {
 
 				builder.append(" WHERE ");
-				visitors.push(valueVisitor);
+				visitors.push(conditionVisitor);
 			} else {
 				if (segment instanceof OrderByField && !(visitors.peek() instanceof OrderByClauseVisitor)) {
 
@@ -133,14 +133,13 @@ public class NaiveSqlRenderer {
 
 			} else if (segment instanceof Where) {
 
-				builder.append(valueVisitor.getValue());
+				builder.append(conditionVisitor.getValue());
 				visitors.pop();
 
 			} else if (segment instanceof Select) {
 
 				if (orderByClauseVisitor != null) {
 
-					builder.append(" ORDER BY ");
 					builder.append(orderByClauseVisitor.getValue());
 				}
 
@@ -453,7 +452,7 @@ public class NaiveSqlRenderer {
 
 			@Override
 			void leaveMatched(Visitable segment) {
-				System.out.println(String.format("leaving: %s %s", segment, this));
+
 				if (segment instanceof AndCondition) {
 
 					builder.append(left.getValue()) //
@@ -534,8 +533,11 @@ public class NaiveSqlRenderer {
 
 			@Override
 			void enterMatched(Visitable segment) {
+
 				if (!first) {
 					builder.append(", ");
+				} else {
+					builder.append(" ORDER BY ");
 				}
 				first = false;
 			}
