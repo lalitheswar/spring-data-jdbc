@@ -84,10 +84,12 @@ public class NaiveSqlRenderer {
 		private SelectListVisitor selectListVisitor = new SelectListVisitor();
 		private FromClauseVisitor fromClauseVisitor = new FromClauseVisitor();
 		private JoinTableAndConditionVisitor joinTableAndConditionVisitor;
+		private JoinVisitor joinVisitor = new JoinVisitor();
 		private OrderByClauseVisitor orderByClauseVisitor;
 
 		{
 			visitors.push(this);
+			visitors.push(joinVisitor);
 			visitors.push(fromClauseVisitor);
 			visitors.push(selectListVisitor);
 		}
@@ -105,11 +107,6 @@ public class NaiveSqlRenderer {
 			} else if (segment instanceof From) {
 
 				builder.append(selectListVisitor.getValue());
-
-			} else if (segment instanceof Join) {
-
-				joinTableAndConditionVisitor = new JoinTableAndConditionVisitor();
-				visitors.push(joinTableAndConditionVisitor);
 
 			} else if (segment instanceof Where) {
 
@@ -130,16 +127,15 @@ public class NaiveSqlRenderer {
 		public void leave(Visitable segment) {
 
 			if (segment instanceof From) {
+
 				builder.append(" FROM ");
 				builder.append(fromClauseVisitor.getValue());
+
 			} else if (segment instanceof Where) {
 
 				builder.append(valueVisitor.getValue());
 				visitors.pop();
-			} else if (segment instanceof Join) {
 
-				builder.append(" JOIN ");
-				builder.append(joinTableAndConditionVisitor.getValue());
 			} else if (segment instanceof Select) {
 
 				if (orderByClauseVisitor != null) {
@@ -365,9 +361,8 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class JoinVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+		private class JoinVisitor extends ReadWhileMatchesVisitor {
 
-			private StringBuilder builder = new StringBuilder();
 			private JoinTableAndConditionVisitor subvisitor;
 
 			@Override
@@ -387,12 +382,7 @@ public class NaiveSqlRenderer {
 				builder.append(" JOIN ").append(subvisitor.getValue());
 			}
 
-			@Override
-			public String getValue() {
-				return builder.toString();
-			}
 		}
-
 
 		private class JoinTableAndConditionVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
 
