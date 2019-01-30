@@ -89,60 +89,22 @@ public class NaiveSqlRenderer {
 		private SelectStatementVisitor selectStatementVisitor = new SelectStatementVisitor();
 
 		{
-			visitors.push(this);
-			visitors.push(orderByClauseVisitor);
-			visitors.push(whereClauseVisitor);
-			visitors.push(joinVisitor);
-			visitors.push(fromClauseVisitor);
-			visitors.push(selectListVisitor);
+			visitors.push(segment -> {});
+			visitors.push(selectStatementVisitor);
 		}
 
 		@Override
 		public void enter(Visitable segment) {
 
-			if (segment instanceof Select) {
-
-				builder.append("SELECT ");
-				if (((Select) segment).isDistinct()) {
-					builder.append("DISTINCT ");
-				}
-
-			} else if (segment instanceof From) {
-
-				builder.append(selectListVisitor.getValue());
-
-			} else {
-				visitors.peek().enter(segment);
-			}
+			Visitor delegate = visitors.peek();
+			delegate.enter(segment);
 		}
 
 		@Override
 		public void leave(Visitable segment) {
 
-			if (segment instanceof From) {
-
-				builder.append(" FROM ");
-				builder.append(fromClauseVisitor.getValue());
-
-			} else if (segment instanceof Select) {
-
-				if (orderByClauseVisitor != null) {
-
-					builder.append(orderByClauseVisitor.getValue());
-				}
-
-				OptionalLong limit = ((Select) segment).getLimit();
-				if (limit.isPresent()) {
-					builder.append(" LIMIT ").append(limit.getAsLong());
-				}
-
-				OptionalLong offset = ((Select) segment).getOffset();
-				if (offset.isPresent()) {
-					builder.append(" OFFSET ").append(offset.getAsLong());
-				}
-			} else {
-				visitors.peek().leave(segment);
-			}
+			Visitor delegate = visitors.peek();
+			delegate.leave(segment);
 		}
 
 		/**
@@ -246,8 +208,10 @@ public class NaiveSqlRenderer {
 			@Override
 			public void leave(Visitable segment) {
 
-				Assert.notNull(currentSegment);
-				if (segment == currentSegment) {
+				if (currentSegment == null) {
+					Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
+					visitors.peek().leave(segment);
+				} else if (segment == currentSegment) {
 					leaveMatched(segment);
 					Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
 				} else {
@@ -282,8 +246,10 @@ public class NaiveSqlRenderer {
 					builder.append("DISTINCT ");
 				}
 
-				builder.append(selectListVisitor.getValue()).append(fromClauseVisitor.getValue())
-						.append(joinVisitor.getValue());
+				builder.append(selectListVisitor.getValue()) //
+						.append(fromClauseVisitor.getValue()) //
+						.append(joinVisitor.getValue()) //
+						.append(whereClauseVisitor.getValue());
 
 				builder.append(orderByClauseVisitor.getValue());
 
@@ -366,7 +332,27 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		private class FromClauseVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+		private class FromClauseVisitor extends ReadOneVisitor implements ValuedVisitor {
+
+			private FromTableVisitor fromTableVisitor = new FromTableVisitor();
+
+			@Override
+			boolean matches(Visitable segment) {
+				return segment instanceof From;
+			}
+
+			@Override
+			void enterMatched(Visitable segment) {
+				visitors.push(fromTableVisitor);
+			}
+
+			@Override
+			public String getValue() {
+				return " FROM " + fromTableVisitor.getValue();
+			}
+		}
+
+		private class FromTableVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
 
 			private final StringBuilder builder = new StringBuilder();
 			private boolean first = true;
@@ -426,7 +412,6 @@ public class NaiveSqlRenderer {
 
 			void append(String s) {
 				internal.append(s);
-				builder.append(s);
 			}
 
 		}
@@ -483,7 +468,7 @@ public class NaiveSqlRenderer {
 			void leaveMatched(Visitable segment) {
 
 				internal.append(conditionVisitor.getValue());
-				builder.append(internal);
+//				builder.append(internal);
 			}
 
 			@Override
