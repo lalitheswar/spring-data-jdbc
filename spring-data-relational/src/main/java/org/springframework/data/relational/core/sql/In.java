@@ -16,19 +16,26 @@
 package org.springframework.data.relational.core.sql;
 
 /**
+ * {@code IN} {@link Condition} clause.
+ *
  * @author Jens Schauder
+ * TODO: Accept multiple Expressions.
  */
 public class In extends AbstractSegment implements Condition {
 
 	private final Expression left;
 	private final Expression right;
 
-	public In(Expression left, Expression right) {
+	private In(Expression left, Expression right) {
 
 		super(left, right);
 
 		this.left = left;
 		this.right = right;
+	}
+
+	public static Condition create(Expression columnOrExpression, Expression arg) {
+		return new In(columnOrExpression, arg);
 	}
 
 	@Override

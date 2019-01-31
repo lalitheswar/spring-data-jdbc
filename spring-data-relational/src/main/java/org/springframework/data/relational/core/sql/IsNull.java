@@ -15,7 +15,11 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import org.springframework.util.Assert;
+
 /**
+ * {@code IS NULL} {@link Condition}.
+ *
  * @author Jens Schauder
  */
 public class IsNull extends AbstractSegment implements Condition {
@@ -24,7 +28,11 @@ public class IsNull extends AbstractSegment implements Condition {
 
 	private final boolean negated;
 
-	public IsNull(Expression expression, boolean negated) {
+	private IsNull(Expression expression) {
+		this(expression, false);
+	}
+
+	private IsNull(Expression expression, boolean negated) {
 
 		super(expression);
 
@@ -32,8 +40,11 @@ public class IsNull extends AbstractSegment implements Condition {
 		this.negated = negated;
 	}
 
-	public IsNull(Expression expression) {
-		this(expression, false);
+	public static IsNull create(Expression expression) {
+
+		Assert.notNull(expression, "Expression must not be null");
+
+		return new IsNull(expression);
 	}
 
 	@Override
@@ -41,12 +52,12 @@ public class IsNull extends AbstractSegment implements Condition {
 		return new IsNull(expression, !negated);
 	}
 
+	public boolean isNegated() {
+		return negated;
+	}
+
 	@Override
 	public String toString() {
 		return expression + (negated ? " IS NOT NULL" : " IS NULL");
-	}
-
-	public boolean isNegated() {
-		return negated;
 	}
 }

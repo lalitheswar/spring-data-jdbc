@@ -25,6 +25,7 @@ import org.springframework.util.Assert;
  * <p/>The Query Builder API is intended for framework usage to produce SQL required for framework operations.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  * @see Expressions
  * @see Conditions
  * @see Functions

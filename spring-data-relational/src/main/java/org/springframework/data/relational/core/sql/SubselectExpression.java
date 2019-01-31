@@ -16,13 +16,15 @@
 package org.springframework.data.relational.core.sql;
 
 /**
+ * Wrapper for a {@link Select} query to be used as subselect.
+ *
  * @author Jens Schauder
  */
-public class SubselectExpression extends AbstractSegment implements Expression {
+class SubselectExpression extends AbstractSegment implements Expression {
 
 	private final Select subselect;
 
-	public SubselectExpression(Select subselect) {
+	SubselectExpression(Select subselect) {
 
 		super(subselect);
 

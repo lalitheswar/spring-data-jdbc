@@ -17,13 +17,13 @@ package org.springframework.data.relational.core.sql;
 
 import static org.assertj.core.api.Assertions.*;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Unit tests for {@link NaiveSqlRenderer}.
  *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 public class NaiveSqlRendererUnitTests {
 
@@ -196,8 +196,8 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(table).where(
 				Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name"))
-				.or(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name2")))
-				.and(Conditions.isNull(baz))
+						.or(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name2")))
+						.and(Conditions.isNull(baz))
 		).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE (foo.bar = :name OR foo.bar = :name2) AND foo.baz IS NULL");
@@ -227,7 +227,7 @@ public class NaiveSqlRendererUnitTests {
 
 		Select subselect = Select.builder().select(bah).from(floo).build();
 
-		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, new SubselectExpression(subselect))).build();
+		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, subselect)).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
 	}

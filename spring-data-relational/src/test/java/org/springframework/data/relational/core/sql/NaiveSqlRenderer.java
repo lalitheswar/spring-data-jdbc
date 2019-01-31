@@ -17,6 +17,7 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.OptionalLong;
 import java.util.Stack;
+import java.util.function.Predicate;
 
 import org.springframework.util.Assert;
 
@@ -68,11 +69,12 @@ public class NaiveSqlRenderer {
 		StackBasedVisitor visitor = new StackBasedVisitor();
 		select.visit(visitor);
 
-		return visitor.selectStatementVisitor.getValue();
+		return visitor.selectStatementVisitor.getRenderedPart();
 	}
 
-	interface ValuedVisitor extends Visitor {
-		String getValue();
+	interface PartRenderer extends Visitor {
+
+		String getRenderedPart();
 	}
 
 	static class StackBasedVisitor implements Visitor {
@@ -82,7 +84,8 @@ public class NaiveSqlRenderer {
 		private SelectStatementVisitor selectStatementVisitor = new SelectStatementVisitor();
 
 		{
-			visitors.push(segment -> {});
+			visitors.push(segment -> {
+			});
 			visitors.push(selectStatementVisitor);
 		}
 
@@ -105,27 +108,35 @@ public class NaiveSqlRenderer {
 		 * a not matching element is encountered it pops itself from the stack and delegates the call to the now top most
 		 * element of the stack.
 		 */
-		abstract class ReadWhileMatchesVisitor implements Visitor {
+		class ForwardingSubtreeVisitor implements Visitor {
+
+			private final Predicate<Visitable> predicate;
 
 			private Visitable currentSegment = null;
 			private Visitor nextVisitor;
 
-			abstract boolean matches(Visitable segment);
+			ForwardingSubtreeVisitor(Predicate<Visitable> predicate) {
+				this.predicate = predicate;
+			}
 
-			void enterMatched(Visitable segment) {}
+			void enterMatched(Visitable segment) {
+			}
 
-			void enterSub(Visitable segment) {}
+			void enterNested(Visitable segment) {
+			}
 
-			void leaveMatched(Visitable segment) {}
+			void leaveMatched(Visitable segment) {
+			}
 
-			void leaveSub(Visitable segment) {}
+			void leaveNested(Visitable segment) {
+			}
 
 			@Override
-			public void enter(Visitable segment) {
+			public final void enter(Visitable segment) {
 
 				if (currentSegment == null) {
 
-					if (matches(segment)) {
+					if (predicate.test(segment)) {
 
 						currentSegment = segment;
 						enterMatched(segment);
@@ -138,14 +149,13 @@ public class NaiveSqlRenderer {
 						nextVisitor = visitors.peek();
 						nextVisitor.enter(segment);
 					}
-
 				} else {
-					enterSub(segment);
+					enterNested(segment);
 				}
 			}
 
 			@Override
-			public void leave(Visitable segment) {
+			public final void leave(Visitable segment) {
 
 				if (currentSegment == null) {
 					// we are receiving the leave event of the element above
@@ -157,7 +167,7 @@ public class NaiveSqlRenderer {
 					currentSegment = null;
 					leaveMatched(segment);
 				} else {
-					leaveSub(segment);
+					leaveNested(segment);
 				}
 			}
 		}
@@ -166,26 +176,34 @@ public class NaiveSqlRenderer {
 		 * Visits exactly one element that must match the expectations as defined in {@link #matches(Visitable)}. Ones
 		 * handled it pops itself from the stack.
 		 */
-		abstract class ReadOneVisitor implements Visitor {
+		abstract class FilteredSubtreeVisitor implements Visitor {
+
+			private final Predicate<Visitable> filter;
 
 			private Visitable currentSegment;
 
-			abstract boolean matches(Visitable segment);
+			FilteredSubtreeVisitor(Predicate<Visitable> filter) {
+				this.filter = filter;
+			}
 
-			void enterMatched(Visitable segment) {}
+			void enterMatched(Visitable segment) {
+			}
 
-			void enterSub(Visitable segment) {}
+			void enterNested(Visitable segment) {
+			}
 
-			void leaveMatched(Visitable segment) {}
+			void leaveMatched(Visitable segment) {
+			}
 
-			void leaveSub(Visitable segment) {}
+			void leaveNested(Visitable segment) {
+			}
 
 			@Override
-			public void enter(Visitable segment) {
+			public final void enter(Visitable segment) {
 
 				if (currentSegment == null) {
 
-					if (matches(segment)) {
+					if (filter.test(segment)) {
 
 						currentSegment = segment;
 						enterMatched(segment);
@@ -194,12 +212,12 @@ public class NaiveSqlRenderer {
 						visitors.peek().enter(segment);
 					}
 				} else {
-					enterSub(segment);
+					enterNested(segment);
 				}
 			}
 
 			@Override
-			public void leave(Visitable segment) {
+			public final void leave(Visitable segment) {
 
 				if (currentSegment == null) {
 					Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
@@ -208,13 +226,12 @@ public class NaiveSqlRenderer {
 					leaveMatched(segment);
 					Assert.isTrue(visitors.pop() == this, "Popped wrong visitor instance.");
 				} else {
-					leaveSub(segment);
+					leaveNested(segment);
 				}
-
 			}
 		}
 
-		class SelectStatementVisitor extends ReadOneVisitor implements ValuedVisitor {
+		class SelectStatementVisitor extends FilteredSubtreeVisitor implements PartRenderer {
 
 			private StringBuilder builder = new StringBuilder();
 
@@ -224,9 +241,8 @@ public class NaiveSqlRenderer {
 			private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor();
 			private OrderByClauseVisitor orderByClauseVisitor = new OrderByClauseVisitor();
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Select;
+			SelectStatementVisitor() {
+				super(Select.class::isInstance);
 			}
 
 			@Override
@@ -247,12 +263,12 @@ public class NaiveSqlRenderer {
 					builder.append("DISTINCT ");
 				}
 
-				builder.append(selectListVisitor.getValue()) //
-						.append(fromClauseVisitor.getValue()) //
-						.append(joinVisitor.getValue()) //
-						.append(whereClauseVisitor.getValue());
+				builder.append(selectListVisitor.getRenderedPart()) //
+						.append(fromClauseVisitor.getRenderedPart()) //
+						.append(joinVisitor.getRenderedPart()) //
+						.append(whereClauseVisitor.getRenderedPart());
 
-				builder.append(orderByClauseVisitor.getValue());
+				builder.append(orderByClauseVisitor.getRenderedPart());
 
 				OptionalLong limit = ((Select) segment).getLimit();
 				if (limit.isPresent()) {
@@ -266,21 +282,20 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return builder.toString();
 			}
 		}
 
-		class SelectListVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+		class SelectListVisitor extends ForwardingSubtreeVisitor implements PartRenderer {
 
 			private StringBuilder builder = new StringBuilder();
 			private boolean first = true;
 			private boolean insideFunction = false; // this is hackery and should be fix with a proper visitor for
-																							// subelements.
+			// subelements.
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Expression;
+			SelectListVisitor() {
+				super(Expression.class::isInstance);
 			}
 
 			@Override
@@ -313,7 +328,7 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			void leaveSub(Visitable segment) {
+			void leaveNested(Visitable segment) {
 
 				if (segment instanceof Table) {
 					builder.append(((Table) segment).getReferenceName()).append('.');
@@ -333,18 +348,17 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return builder.toString();
 			}
 		}
 
-		private class FromClauseVisitor extends ReadOneVisitor implements ValuedVisitor {
+		class FromClauseVisitor extends FilteredSubtreeVisitor implements PartRenderer {
 
 			private FromTableVisitor fromTableVisitor = new FromTableVisitor();
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof From;
+			FromClauseVisitor() {
+				super(From.class::isInstance);
 			}
 
 			@Override
@@ -353,19 +367,18 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public String getValue() {
-				return " FROM " + fromTableVisitor.getValue();
+			public String getRenderedPart() {
+				return " FROM " + fromTableVisitor.getRenderedPart();
 			}
 		}
 
-		private class FromTableVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+		class FromTableVisitor extends ForwardingSubtreeVisitor implements PartRenderer {
 
 			private final StringBuilder builder = new StringBuilder();
 			private boolean first = true;
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Table;
+			FromTableVisitor() {
+				super(Table.class::isInstance);
 			}
 
 			@Override
@@ -383,19 +396,18 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return builder.toString();
 			}
 		}
 
-		private class JoinVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+		class JoinVisitor extends ForwardingSubtreeVisitor implements PartRenderer {
 
 			private StringBuilder internal = new StringBuilder();
 			private JoinTableAndConditionVisitor subvisitor;
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Join;
+			JoinVisitor() {
+				super(Join.class::isInstance);
 			}
 
 			@Override
@@ -408,28 +420,26 @@ public class NaiveSqlRenderer {
 			@Override
 			void leaveMatched(Visitable segment) {
 				append(" JOIN ");
-				append(subvisitor.getValue());
+				append(subvisitor.getRenderedPart());
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return internal.toString();
 			}
 
 			void append(String s) {
 				internal.append(s);
 			}
-
 		}
 
-		private class JoinTableAndConditionVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+		class JoinTableAndConditionVisitor extends ForwardingSubtreeVisitor implements PartRenderer {
 
 			private final StringBuilder builder = new StringBuilder();
 			boolean inCondition = false;
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Table || segment instanceof Condition;
+			JoinTableAndConditionVisitor() {
+				super(it -> it instanceof Table || it instanceof Condition);
 			}
 
 			@Override
@@ -448,19 +458,18 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return builder.toString();
 			}
 		}
 
-		private class WhereClauseVisitor extends ReadOneVisitor implements ValuedVisitor {
+		private class WhereClauseVisitor extends FilteredSubtreeVisitor implements PartRenderer {
 
-			private ValuedVisitor conditionVisitor = new ConditionVisitor();
+			private ConditionVisitor conditionVisitor = new ConditionVisitor();
 			private StringBuilder internal = new StringBuilder();
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Where;
+			WhereClauseVisitor() {
+				super(Where.class::isInstance);
 			}
 
 			@Override
@@ -473,26 +482,25 @@ public class NaiveSqlRenderer {
 			@Override
 			void leaveMatched(Visitable segment) {
 
-				internal.append(conditionVisitor.getValue());
+				internal.append(conditionVisitor.getRenderedPart());
 				// builder.append(internal);
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return internal.toString();
 			}
 		}
 
-		private class ConditionVisitor extends ReadOneVisitor implements ValuedVisitor {
+		private class ConditionVisitor extends FilteredSubtreeVisitor implements PartRenderer {
 
 			private StringBuilder builder = new StringBuilder();
 
-			ValuedVisitor left;
-			ValuedVisitor right;
+			PartRenderer left;
+			PartRenderer right;
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Condition;
+			ConditionVisitor() {
+				super(Condition.class::isInstance);
 			}
 
 			@Override
@@ -504,12 +512,10 @@ public class NaiveSqlRenderer {
 					right = new ConditionVisitor();
 					visitors.push(right);
 					visitors.push(left);
-
 				} else if (segment instanceof IsNull) {
 
 					left = new ExpressionVisitor();
 					visitors.push(left);
-
 				} else if (segment instanceof Equals || segment instanceof In) {
 
 					left = new ExpressionVisitor();
@@ -524,51 +530,46 @@ public class NaiveSqlRenderer {
 
 				if (segment instanceof AndCondition) {
 
-					builder.append(left.getValue()) //
+					builder.append(left.getRenderedPart()) //
 							.append(" AND ") //
-							.append(right.getValue());
-
+							.append(right.getRenderedPart());
 				} else if (segment instanceof OrCondition) {
 
 					builder.append("(") //
-							.append(left.getValue()) //
+							.append(left.getRenderedPart()) //
 							.append(" OR ") //
-							.append(right.getValue()) //
+							.append(right.getRenderedPart()) //
 							.append(")");
-
 				} else if (segment instanceof IsNull) {
 
-					builder.append(left.getValue());
+					builder.append(left.getRenderedPart());
 					if (((IsNull) segment).isNegated()) {
 						builder.append(" IS NOT NULL");
 					} else {
 						builder.append(" IS NULL");
 					}
-
 				} else if (segment instanceof Equals) {
 
-					builder.append(left.getValue()).append(" = ").append(right.getValue());
-
+					builder.append(left.getRenderedPart()).append(" = ").append(right.getRenderedPart());
 				} else if (segment instanceof In) {
 
-					builder.append(left.getValue()).append(" IN ").append("(").append(right.getValue()).append(")");
+					builder.append(left.getRenderedPart()).append(" IN ").append("(").append(right.getRenderedPart()).append(")");
 				}
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return builder.toString();
 			}
 		}
 
-		private class ExpressionVisitor extends ReadOneVisitor implements ValuedVisitor {
+		private class ExpressionVisitor extends FilteredSubtreeVisitor implements PartRenderer {
 
 			private String value = "";
 			private SelectStatementVisitor valuedVisitor;
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof Expression;
+			ExpressionVisitor() {
+				super(Expression.class::isInstance);
 			}
 
 			@Override
@@ -594,24 +595,23 @@ public class NaiveSqlRenderer {
 			void leaveMatched(Visitable segment) {
 
 				if (valuedVisitor != null) {
-					value = valuedVisitor.getValue();
+					value = valuedVisitor.getRenderedPart();
 				}
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return value;
 			}
 		}
 
-		private class OrderByClauseVisitor extends ReadWhileMatchesVisitor implements ValuedVisitor {
+		private class OrderByClauseVisitor extends ForwardingSubtreeVisitor implements PartRenderer {
 
 			StringBuilder builder = new StringBuilder();
 			boolean first = true;
 
-			@Override
-			boolean matches(Visitable segment) {
-				return segment instanceof OrderByField;
+			OrderByClauseVisitor() {
+				super(OrderByField.class::isInstance);
 			}
 
 			@Override
@@ -637,7 +637,7 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			void leaveSub(Visitable segment) {
+			void leaveNested(Visitable segment) {
 
 				if (segment instanceof Column) {
 					builder.append(((Column) segment).getReferenceName());
@@ -645,11 +645,9 @@ public class NaiveSqlRenderer {
 			}
 
 			@Override
-			public String getValue() {
+			public String getRenderedPart() {
 				return builder.toString();
 			}
 		}
-
 	}
-
 }
