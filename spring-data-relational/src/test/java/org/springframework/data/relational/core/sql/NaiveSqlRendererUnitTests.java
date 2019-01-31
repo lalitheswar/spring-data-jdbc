@@ -208,7 +208,6 @@ public class NaiveSqlRendererUnitTests {
 
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
-		Column baz = table.column("baz");
 
 		Select select = Select.builder().select(bar).from(table).where(
 				Conditions.in(bar, new BindMarker.NamedBindMarker("name"))
@@ -230,6 +229,6 @@ public class NaiveSqlRendererUnitTests {
 
 		Select select = Select.builder().select(bar).from(foo).where(Conditions.in(bar, new SubselectExpression(subselect))).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar in (SELECT floo.bah FROM floo)");
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (SELECT floo.bah FROM floo)");
 	}
 }

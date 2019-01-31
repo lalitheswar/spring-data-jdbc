@@ -214,7 +214,7 @@ public class NaiveSqlRenderer {
 			}
 		}
 
-		class SelectStatementVisitor extends ReadOneVisitor implements ValuedVisitor{
+		class SelectStatementVisitor extends ReadOneVisitor implements ValuedVisitor {
 
 			private StringBuilder builder = new StringBuilder();
 
@@ -474,7 +474,7 @@ public class NaiveSqlRenderer {
 			void leaveMatched(Visitable segment) {
 
 				internal.append(conditionVisitor.getValue());
-//				builder.append(internal);
+				// builder.append(internal);
 			}
 
 			@Override
@@ -564,6 +564,7 @@ public class NaiveSqlRenderer {
 		private class ExpressionVisitor extends ReadOneVisitor implements ValuedVisitor {
 
 			private String value = "";
+			private SelectStatementVisitor valuedVisitor;
 
 			@Override
 			boolean matches(Visitable segment) {
@@ -573,14 +574,27 @@ public class NaiveSqlRenderer {
 			@Override
 			void enterMatched(Visitable segment) {
 
-				if (segment instanceof Column) {
+				if (segment instanceof SubselectExpression) {
+
+					valuedVisitor = new SelectStatementVisitor();
+					visitors.push(valuedVisitor);
+				} else if (segment instanceof Column) {
 					value = ((Column) segment).getTable().getName() + "." + ((Column) segment).getName();
 				} else if (segment instanceof BindMarker) {
+
 					if (segment instanceof BindMarker.NamedBindMarker) {
 						value = ":" + ((BindMarker.NamedBindMarker) segment).getName();
 					} else {
 						value = segment.toString();
 					}
+				}
+			}
+
+			@Override
+			void leaveMatched(Visitable segment) {
+
+				if (valuedVisitor != null) {
+					value = valuedVisitor.getValue();
 				}
 			}
 
