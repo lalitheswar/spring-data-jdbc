@@ -21,7 +21,8 @@ import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Visitable;
 
 /**
- * {@link org.springframework.data.relational.core.sql.Visitor} rendering comparison {@link Condition}. Uses a {@link RenderTarget} to call back for render results.
+ * {@link org.springframework.data.relational.core.sql.Visitor} rendering comparison {@link Condition}. Uses a
+ * {@link RenderTarget} to call back for render results.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -40,26 +41,34 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 		this.comparator = " = ";
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterNested(Visitable segment) {
+	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Expression) {
 			ExpressionVisitor visitor = new ExpressionVisitor();
 			current = visitor;
-			return visitor;
+			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Condition) {
 			ConditionVisitor visitor = new ConditionVisitor();
 			current = visitor;
-			return visitor;
+			return Delegation.delegateTo(visitor);
 		}
 
 		throw new IllegalStateException("Cannot provide visitor for " + segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveNested(Visitable segment) {
+	Delegation leaveNested(Visitable segment) {
 
 		if (current != null) {
 			if (part.length() != 0) {
@@ -73,8 +82,12 @@ class ComparisonVisitor extends FilteredSubtreeVisitor {
 		return super.leaveNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(Visitable segment) {
+	Delegation leaveMatched(Visitable segment) {
 
 		target.onRendered(part);
 

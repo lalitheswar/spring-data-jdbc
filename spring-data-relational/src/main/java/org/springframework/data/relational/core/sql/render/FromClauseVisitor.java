@@ -41,18 +41,25 @@ class FromClauseVisitor extends TypedSubtreeVisitor<From> {
 		builder.append(it);
 	});
 
-
 	FromClauseVisitor(RenderTarget parent) {
 		this.parent = parent;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterNested(Visitable segment) {
-		return visitor;
+	Delegation enterNested(Visitable segment) {
+		return Delegation.delegateTo(visitor);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(From segment) {
+	Delegation leaveMatched(From segment) {
 		parent.onRendered(builder);
 		return super.leaveMatched(segment);
 	}

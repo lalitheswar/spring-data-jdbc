@@ -30,40 +30,56 @@ class OrderByClauseVisitor extends TypedSubtreeVisitor<OrderByField> implements 
 	private final StringBuilder builder = new StringBuilder();
 	private boolean first = true;
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterMatched(OrderByField segment) {
+	Delegation enterMatched(OrderByField segment) {
 
 		if (!first) {
 			builder.append(", ");
 		}
 		first = false;
 
-		return this;
+		return super.enterMatched(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(OrderByField segment) {
+	Delegation leaveMatched(OrderByField segment) {
 
-		OrderByField field = (OrderByField) segment;
+		OrderByField field = segment;
 
 		if (field.getDirection() != null) {
 			builder.append(" ") //
 					.append(field.getDirection());
 		}
 
-		return this;
+		return Delegation.leave();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveNested(Visitable segment) {
+	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Column) {
 			builder.append(((Column) segment).getReferenceName());
 		}
 
-		return this;
+		return super.leaveNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
+	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

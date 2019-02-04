@@ -40,8 +40,12 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 		this.target = target;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterNested(Visitable segment) {
+	Delegation enterNested(Visitable segment) {
 
 		if (requiresComma) {
 			builder.append(", ");
@@ -54,18 +58,26 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 			insideFunction = false;
 		}
 
-		return this;
+		return super.enterNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(SelectList segment) {
+	Delegation leaveMatched(SelectList segment) {
 
 		target.onRendered(builder);
 		return super.leaveMatched(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveNested(Visitable segment) {
+	Delegation leaveNested(Visitable segment) {
 
 		if (segment instanceof Table) {
 			builder.append(((Table) segment).getReferenceName()).append('.');
@@ -82,9 +94,13 @@ class SelectListVisitor extends TypedSubtreeVisitor<SelectList> implements PartR
 			requiresComma = true;
 		}
 
-		return this;
+		return super.leaveNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
+	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

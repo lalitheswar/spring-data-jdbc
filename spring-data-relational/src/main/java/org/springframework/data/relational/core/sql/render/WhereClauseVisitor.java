@@ -34,18 +34,26 @@ class WhereClauseVisitor extends TypedSubtreeVisitor<Where> {
 		this.parent = parent;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterNested(Visitable segment) {
+	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Condition) {
-			return conditionVisitor;
+			return Delegation.delegateTo(conditionVisitor);
 		}
 
 		return super.enterNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(Where segment) {
+	Delegation leaveMatched(Where segment) {
 
 		parent.onRendered(conditionVisitor.getRenderedPart());
 		return super.leaveMatched(segment);

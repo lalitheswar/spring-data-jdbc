@@ -20,7 +20,8 @@ import org.springframework.data.relational.core.sql.OrCondition;
 import org.springframework.data.relational.core.sql.Visitable;
 
 /**
- * Renderer for {@link AndCondition} and {@link OrCondition}. Uses a {@link RenderTarget} to call back for render results.
+ * Renderer for {@link AndCondition} and {@link OrCondition}. Uses a {@link RenderTarget} to call back for render
+ * results.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -43,8 +44,12 @@ class MultiConcatConditionVisitor extends FilteredSingleConditionRenderSupport {
 		this.concat = " OR ";
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveNested(Visitable segment) {
+	Delegation leaveNested(Visitable segment) {
 
 		if (hasDelegatedRendering()) {
 			if (part.length() != 0) {
@@ -54,11 +59,15 @@ class MultiConcatConditionVisitor extends FilteredSingleConditionRenderSupport {
 			part.append(consumeRenderedPart());
 		}
 
-		return this;
+		return super.leaveNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.FilteredSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(Visitable segment) {
+	Delegation leaveMatched(Visitable segment) {
 
 		target.onRendered(part);
 

@@ -52,42 +52,49 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 
 	private WhereClauseVisitor whereClauseVisitor = new WhereClauseVisitor(where::append);
 
-
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.DelegatingVisitor#doEnter(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	public DelegatingVisitor doEnter(Visitable segment) {
+	public Delegation doEnter(Visitable segment) {
 
 		if (segment instanceof SelectList) {
-			return selectListVisitor;
+			return Delegation.delegateTo(selectListVisitor);
 		}
 
 		if (segment instanceof OrderByField) {
-			return orderByClauseVisitor;
+			return Delegation.delegateTo(orderByClauseVisitor);
 		}
 
 		if (segment instanceof From) {
-			return fromClauseVisitor;
+			return Delegation.delegateTo(fromClauseVisitor);
 		}
 
 		if (segment instanceof Join) {
-			return new JoinVisitor(it -> {
+			return Delegation.delegateTo(new JoinVisitor(it -> {
 
 				if (join.length() != 0) {
 					join.append(' ');
 				}
 
 				join.append(it);
-			});
+			}));
 		}
 
 		if (segment instanceof Where) {
-			return whereClauseVisitor;
+			return Delegation.delegateTo(whereClauseVisitor);
 		}
 
-		return this;
+		return Delegation.retain();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.DelegatingVisitor#doLeave(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	public DelegatingVisitor doLeave(Visitable segment) {
+	public Delegation doLeave(Visitable segment) {
 
 		if (segment instanceof Select) {
 
@@ -124,12 +131,16 @@ class SelectStatementVisitor extends DelegatingVisitor implements PartRenderer {
 				builder.append(" OFFSET ").append(offset.getAsLong());
 			}
 
-			return null;
+			return Delegation.leave();
 		}
 
-		return this;
+		return Delegation.retain();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
+	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

@@ -183,7 +183,7 @@ public class NaiveSqlRendererUnitTests {
 		Table table = SQL.table("foo");
 		Column bar = table.column("bar");
 
-		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name"))).build();
+		Select select = Select.builder().select(bar).from(table).where(Conditions.isEqual(bar, SQL.bindMarker(":name"))).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name");
 	}
@@ -196,8 +196,8 @@ public class NaiveSqlRendererUnitTests {
 		Column baz = table.column("baz");
 
 		Select select = Select.builder().select(bar).from(table).where(
-				Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name"))
-						.or(Conditions.isEqual(bar, new BindMarker.NamedBindMarker("name2")))
+				Conditions.isEqual(bar, SQL.bindMarker(":name"))
+						.or(Conditions.isEqual(bar, SQL.bindMarker(":name2")))
 						.and(Conditions.isNull(baz))
 		).build();
 
@@ -211,7 +211,7 @@ public class NaiveSqlRendererUnitTests {
 		Column bar = table.column("bar");
 
 		Select select = Select.builder().select(bar).from(table).where(
-				Conditions.in(bar, new BindMarker.NamedBindMarker("name"))
+				Conditions.in(bar, SQL.bindMarker(":name"))
 		).build();
 
 		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name)");

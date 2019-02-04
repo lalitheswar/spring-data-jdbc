@@ -16,13 +16,17 @@
 package org.springframework.data.relational.core.sql.render;
 
 import org.springframework.data.relational.core.sql.Aliased;
+import org.springframework.data.relational.core.sql.From;
 import org.springframework.data.relational.core.sql.Table;
 
 /**
+ * Renderer for {@link Table} used within a {@link From} clause. Uses a {@link RenderTarget} to call back for render
+ * results.
+ *
  * @author Mark Paluch
+ * @author Jens Schauder
  */
 class FromTableVisitor extends TypedSubtreeVisitor<Table> {
-
 
 	private final RenderTarget parent;
 
@@ -31,8 +35,12 @@ class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 		this.parent = parent;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterMatched(Table segment) {
+	Delegation enterMatched(Table segment) {
 
 		StringBuilder builder = new StringBuilder();
 
@@ -43,6 +51,6 @@ class FromTableVisitor extends TypedSubtreeVisitor<Table> {
 
 		parent.onRendered(builder);
 
-		return this;
+		return super.enterMatched(segment);
 	}
 }

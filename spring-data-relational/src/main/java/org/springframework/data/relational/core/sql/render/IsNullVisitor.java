@@ -33,9 +33,12 @@ class IsNullVisitor extends TypedSingleConditionRenderSupport<IsNull> {
 		this.target = target;
 	}
 
-
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveNested(Visitable segment) {
+	Delegation leaveNested(Visitable segment) {
 
 		if (hasDelegatedRendering()) {
 			part.append(consumeRenderedPart());
@@ -44,8 +47,12 @@ class IsNullVisitor extends TypedSingleConditionRenderSupport<IsNull> {
 		return super.leaveNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(IsNull segment) {
+	Delegation leaveMatched(IsNull segment) {
 
 		if (segment.isNegated()) {
 			part.append(" IS NOT NULL");

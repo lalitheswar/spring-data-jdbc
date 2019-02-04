@@ -23,7 +23,8 @@ import org.springframework.data.relational.core.sql.IsNull;
 import org.springframework.data.relational.core.sql.OrCondition;
 
 /**
- * {@link org.springframework.data.relational.core.sql.Visitor} delegating {@link Condition} rendering to condition {@link org.springframework.data.relational.core.sql.Visitor}s.
+ * {@link org.springframework.data.relational.core.sql.Visitor} delegating {@link Condition} rendering to condition
+ * {@link org.springframework.data.relational.core.sql.Visitor}s.
  *
  * @author Mark Paluch
  * @author Jens Schauder
@@ -37,8 +38,19 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 
 	private StringBuilder builder = new StringBuilder();
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterMatched(Condition segment) {
+	Delegation enterMatched(Condition segment) {
+
+		DelegatingVisitor visitor = getDelegation(segment);
+
+		return visitor != null ? Delegation.delegateTo(visitor) : Delegation.retain();
+	}
+
+	private DelegatingVisitor getDelegation(Condition segment) {
 
 		if (segment instanceof AndCondition) {
 			return new MultiConcatConditionVisitor((AndCondition) segment, builder::append);
@@ -60,9 +72,13 @@ class ConditionVisitor extends TypedSubtreeVisitor<Condition> implements PartRen
 			return new InVisitor(builder::append);
 		}
 
-		return this;
+		return null;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
+	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return builder;

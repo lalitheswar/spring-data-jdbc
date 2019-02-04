@@ -77,7 +77,7 @@ public abstract class Conditions {
 	/**
 	 * Creates a {@code IN} {@link Condition clause} for a {@link Select subselect}.
 	 *
-	 * @param Column the column to compare.
+	 * @param column the column to compare.
 	 * @param subselect the subselect.
 	 * @return the {@link In} condition.
 	 */

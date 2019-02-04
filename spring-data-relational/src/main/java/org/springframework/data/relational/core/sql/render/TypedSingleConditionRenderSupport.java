@@ -15,44 +15,38 @@
  */
 package org.springframework.data.relational.core.sql.render;
 
-import java.util.function.Predicate;
-
 import org.springframework.data.relational.core.sql.Condition;
 import org.springframework.data.relational.core.sql.Expression;
 import org.springframework.data.relational.core.sql.Visitable;
 import org.springframework.util.Assert;
 
 /**
- * Support class for {@link FilteredSubtreeVisitor filtering visitors} that want to render a single {@link Condition} and delegate nested {@link Expression} and {@link Condition} rendering.
+ * Support class for {@link TypedSubtreeVisitor typed visitors} that want to render a single {@link Condition} and
+ * delegate nested {@link Expression} and {@link Condition} rendering.
  *
  * @author Mark Paluch
  */
-abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisitor {
+abstract class TypedSingleConditionRenderSupport<T extends Visitable & Condition> extends TypedSubtreeVisitor<T> {
 
 	private PartRenderer current;
 
-	/**
-	 * Creates a new {@link FilteredSingleConditionRenderSupport} given the filter {@link Predicate}.
-	 *
-	 * @param filter filter predicate to identify when to {@link #enterMatched(Visitable) enter}/{@link #leaveMatched(Visitable) leave} the {@link Visitable segment} that this visitor is responsible for.
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
 	 */
-	FilteredSingleConditionRenderSupport(Predicate<Visitable> filter) {
-		super(filter);
-	}
-
 	@Override
-	DelegatingVisitor enterNested(Visitable segment) {
+	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Expression) {
 			ExpressionVisitor visitor = new ExpressionVisitor();
 			current = visitor;
-			return visitor;
+			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Condition) {
 			ConditionVisitor visitor = new ConditionVisitor();
 			current = visitor;
-			return visitor;
+			return Delegation.delegateTo(visitor);
 		}
 
 		throw new IllegalStateException("Cannot provide visitor for " + segment);
@@ -61,15 +55,15 @@ abstract class FilteredSingleConditionRenderSupport extends FilteredSubtreeVisit
 	/**
 	 * Returns whether rendering was delegated to a {@link ExpressionVisitor} or {@link ConditionVisitor}.
 	 *
-	 * @return {@literal true}  when rendering was delegated to a {@link ExpressionVisitor} or {@link ConditionVisitor}.
+	 * @return {@literal true} when rendering was delegated to a {@link ExpressionVisitor} or {@link ConditionVisitor}.
 	 */
 	protected boolean hasDelegatedRendering() {
 		return current != null;
 	}
 
 	/**
-	 * Consumes the delegated rendering part. Call {@link #hasDelegatedRendering()}  to check whether rendering was actually delegated.
-	 * Consumption releases the delegated rendered.
+	 * Consumes the delegated rendering part. Call {@link #hasDelegatedRendering()} to check whether rendering was
+	 * actually delegated. Consumption releases the delegated rendered.
 	 *
 	 * @return the delegated rendered part.
 	 * @throws IllegalStateException if rendering was not delegate.

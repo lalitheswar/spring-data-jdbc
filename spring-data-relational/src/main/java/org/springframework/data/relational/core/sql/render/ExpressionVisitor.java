@@ -39,14 +39,18 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 	ExpressionVisitor() {
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterMatched(Expression segment) {
+	Delegation enterMatched(Expression segment) {
 
 		if (segment instanceof SubselectExpression) {
 
 			SelectStatementVisitor visitor = new SelectStatementVisitor();
 			partRenderer = visitor;
-			return visitor;
+			return Delegation.delegateTo(visitor);
 		}
 
 		if (segment instanceof Column) {
@@ -54,29 +58,37 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		} else if (segment instanceof BindMarker) {
 
 			if (segment instanceof Named) {
-				value = ":" + ((Named) segment).getName();
+				value = ((Named) segment).getName();
 			} else {
 				value = segment.toString();
 			}
 		}
 
-		return this;
+		return Delegation.retain();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#enterNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor enterNested(Visitable segment) {
+	Delegation enterNested(Visitable segment) {
 
 		if (segment instanceof Condition) {
 			ConditionVisitor visitor = new ConditionVisitor();
 			partRenderer = visitor;
-			return visitor;
+			return Delegation.delegateTo(visitor);
 		}
 
 		return super.enterNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(Expression segment) {
+	Delegation leaveMatched(Expression segment) {
 
 		if (partRenderer != null) {
 			value = partRenderer.getRenderedPart();
@@ -86,6 +98,10 @@ class ExpressionVisitor extends TypedSubtreeVisitor<Expression> implements PartR
 		return super.leaveMatched(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.PartRenderer#getRenderedPart()
+	 */
 	@Override
 	public CharSequence getRenderedPart() {
 		return value;

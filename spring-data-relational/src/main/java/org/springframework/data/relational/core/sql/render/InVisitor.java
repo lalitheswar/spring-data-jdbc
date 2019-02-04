@@ -34,8 +34,12 @@ class InVisitor extends TypedSingleConditionRenderSupport<In> {
 		this.target = target;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveNested(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveNested(Visitable segment) {
+	Delegation leaveNested(Visitable segment) {
 
 		if (hasDelegatedRendering()) {
 			CharSequence renderedPart = consumeRenderedPart();
@@ -56,8 +60,12 @@ class InVisitor extends TypedSingleConditionRenderSupport<In> {
 		return super.leaveNested(segment);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.springframework.data.relational.core.sql.render.TypedSubtreeVisitor#leaveMatched(org.springframework.data.relational.core.sql.Visitable)
+	 */
 	@Override
-	DelegatingVisitor leaveMatched(In segment) {
+	Delegation leaveMatched(In segment) {
 
 		part.append(")");
 		target.onRendered(part);
