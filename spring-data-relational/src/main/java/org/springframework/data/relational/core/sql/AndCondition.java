@@ -26,5 +26,4 @@ public class AndCondition extends MultipleCondition {
 	AndCondition(Condition... conditions) {
 		super(" AND ", conditions);
 	}
-
 }

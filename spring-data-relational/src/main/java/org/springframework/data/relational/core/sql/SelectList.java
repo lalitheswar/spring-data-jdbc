@@ -17,10 +17,11 @@ package org.springframework.data.relational.core.sql;
 
 import java.util.List;
 
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
+ * Value object representing the select list (selected columns, functions).
+ *
  * @author Mark Paluch
  */
 public class SelectList extends AbstractSegment {
@@ -30,18 +31,6 @@ public class SelectList extends AbstractSegment {
 	SelectList(List<Expression> selectList) {
 		super(selectList.toArray(new Expression[0]));
 		this.selectList = selectList;
-	}
-
-	@Override
-	public void visit(Visitor visitor) {
-
-		Assert.notNull(visitor, "Visitor must not be null!");
-
-		visitor.enter(this);
-		for (Segment child : selectList) {
-			child.visit(visitor);
-		}
-		visitor.leave(this);
 	}
 
 	/*

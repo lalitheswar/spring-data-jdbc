@@ -40,6 +40,6 @@ public class OrderByClauseVisitorUnitTests {
 		OrderByClauseVisitor visitor = new OrderByClauseVisitor();
 		select.visit(visitor);
 
-		assertThat(visitor.getRenderedPart()).isEqualTo("emp_name ASC");
+		assertThat(visitor.getRenderedPart().toString()).isEqualTo("emp_name ASC");
 	}
 }

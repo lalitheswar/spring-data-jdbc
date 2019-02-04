@@ -18,8 +18,7 @@ package org.springframework.data.relational.core.sql;
 /**
  * {@code IN} {@link Condition} clause.
  *
- * @author Jens Schauder
- * TODO: Accept multiple Expressions.
+ * @author Jens Schauder TODO: Accept multiple Expressions.
  */
 public class In extends AbstractSegment implements Condition {
 
@@ -38,6 +37,10 @@ public class In extends AbstractSegment implements Condition {
 		return new In(columnOrExpression, arg);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return left + " IN " + right;

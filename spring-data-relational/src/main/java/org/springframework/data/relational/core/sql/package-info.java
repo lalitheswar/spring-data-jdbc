@@ -1,6 +1,6 @@
 
 /**
- * Statement Builder implementation. Use {@link org.springframework.data.relational.core.sql.SQL} as entry point to create SQL objects. Objects and dependent objects created by the Query AST are immutable except for builders.
+ * Statement Builder implementation. Use {@link org.springframework.data.relational.core.sql.StatementBuilder} to create statements and {@link org.springframework.data.relational.core.sql.SQL} to create SQL objects. Objects and dependent objects created by the Statement Builder are immutable except for builders.
  * <p/> The Statement Builder API is intended for framework usage to produce SQL required for framework operations.
  */
 @NonNullApi

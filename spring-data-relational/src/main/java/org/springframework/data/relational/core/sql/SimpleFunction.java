@@ -94,6 +94,10 @@ public class SimpleFunction extends AbstractSegment implements Expression {
 			this.alias = alias;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see org.springframework.data.relational.core.sql.Aliased#getAlias()
+		 */
 		@Override
 		public String getAlias() {
 			return alias;
