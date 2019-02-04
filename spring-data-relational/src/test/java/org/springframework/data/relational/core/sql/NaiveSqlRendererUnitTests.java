@@ -18,6 +18,7 @@ package org.springframework.data.relational.core.sql;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.Test;
+import org.springframework.data.relational.core.sql.render.NaiveSqlRenderer;
 
 /**
  * Unit tests for {@link NaiveSqlRenderer}.
@@ -200,7 +201,7 @@ public class NaiveSqlRendererUnitTests {
 						.and(Conditions.isNull(baz))
 		).build();
 
-		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE (foo.bar = :name OR foo.bar = :name2) AND foo.baz IS NULL");
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar = :name OR foo.bar = :name2 AND foo.baz IS NULL");
 	}
 
 	@Test // DATAJDBC-309

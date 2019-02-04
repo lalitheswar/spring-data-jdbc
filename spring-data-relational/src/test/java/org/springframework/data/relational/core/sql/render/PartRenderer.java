@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.relational.core.sql;
+package org.springframework.data.relational.core.sql.render;
+
+import org.springframework.data.relational.core.sql.Visitor;
 
 /**
- * Wrapper for a {@link Select} query to be used as subselect.
+ * {@link Visitor} that renders a specific partial clause or expression.
  *
- * @author Jens Schauder
+ * @author Mark Paluch
  */
-public class SubselectExpression extends AbstractSegment implements Expression {
+interface PartRenderer extends Visitor {
 
-	private final Select subselect;
-
-	SubselectExpression(Select subselect) {
-
-		super(subselect);
-
-		this.subselect = subselect;
-	}
-
-	@Override
-	public String toString() {
-		return "(" + subselect.toString() + ")";
-	}
+	/**
+	 * Returns the rendered part.
+	 *
+	 * @return the rendered part.
+	 */
+	CharSequence getRenderedPart();
 }

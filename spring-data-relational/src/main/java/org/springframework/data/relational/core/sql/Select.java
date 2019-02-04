@@ -35,7 +35,6 @@ import java.util.OptionalLong;
  */
 public interface Select extends Segment, Visitable {
 
-
 	/**
 	 * Creates a new {@link SelectBuilder}.
 	 *

@@ -15,24 +15,41 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.List;
+
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+
 /**
- * Wrapper for a {@link Select} query to be used as subselect.
- *
- * @author Jens Schauder
+ * @author Mark Paluch
  */
-public class SubselectExpression extends AbstractSegment implements Expression {
+public class SelectList extends AbstractSegment {
 
-	private final Select subselect;
+	private final List<Expression> selectList;
 
-	SubselectExpression(Select subselect) {
-
-		super(subselect);
-
-		this.subselect = subselect;
+	SelectList(List<Expression> selectList) {
+		super(selectList.toArray(new Expression[0]));
+		this.selectList = selectList;
 	}
 
 	@Override
+	public void visit(Visitor visitor) {
+
+		Assert.notNull(visitor, "Visitor must not be null!");
+
+		visitor.enter(this);
+		for (Segment child : selectList) {
+			child.visit(visitor);
+		}
+		visitor.leave(this);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
 	public String toString() {
-		return "(" + subselect.toString() + ")";
+		return StringUtils.collectionToDelimitedString(selectList, ", ");
 	}
 }
