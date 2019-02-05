@@ -15,6 +15,8 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.Collection;
+
 import org.springframework.data.relational.core.sql.SelectBuilder.SelectAndFrom;
 
 /**
@@ -47,6 +49,17 @@ public abstract class StatementBuilder {
 	 * @see SelectBuilder#select(Expression...)
 	 */
 	public static SelectAndFrom select(Expression... expressions) {
+		return Select.builder().select(expressions);
+	}
+
+	/**
+	 * Include one or more {@link Expression}s in the select list.
+	 *
+	 * @param expressions the expressions to include.
+	 * @return {@code this} builder.
+	 * @see Table#columns(String...)
+	 */
+	public static SelectAndFrom select(Collection<? extends Expression> expressions) {
 		return Select.builder().select(expressions);
 	}
 

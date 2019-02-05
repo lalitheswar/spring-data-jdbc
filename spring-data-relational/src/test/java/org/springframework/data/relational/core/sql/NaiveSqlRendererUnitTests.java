@@ -218,6 +218,19 @@ public class NaiveSqlRendererUnitTests {
 	}
 
 	@Test // DATAJDBC-309
+	public void shouldInWithNamedParameters() {
+
+		Table table = SQL.table("foo");
+		Column bar = table.column("bar");
+
+		Select select = Select.builder().select(bar).from(table).where(
+				Conditions.in(bar, SQL.bindMarker(":name"), SQL.bindMarker(":name2"))
+		).build();
+
+		assertThat(NaiveSqlRenderer.render(select)).isEqualTo("SELECT foo.bar FROM foo WHERE foo.bar IN (:name, :name2)");
+	}
+
+	@Test // DATAJDBC-309
 	public void shouldRenderInSubselect() {
 
 		Table foo = SQL.table("foo");

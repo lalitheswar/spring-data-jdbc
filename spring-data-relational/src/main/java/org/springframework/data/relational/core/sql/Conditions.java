@@ -15,6 +15,10 @@
  */
 package org.springframework.data.relational.core.sql;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.springframework.util.Assert;
 
 /**
@@ -69,9 +73,39 @@ public abstract class Conditions {
 	public static Condition in(Expression columnOrExpression, Expression arg) {
 
 		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
-		Assert.notNull(columnOrExpression, "Expression argument must not be null");
+		Assert.notNull(arg, "Expression argument must not be null");
 
 		return In.create(columnOrExpression, arg);
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static Condition in(Expression columnOrExpression, Collection<? extends Expression> expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return In.create(columnOrExpression, new ArrayList<>(expressions));
+	}
+
+	/**
+	 * Creates a new {@link In} {@link Condition} given left and right {@link Expression}s.
+	 *
+	 * @param columnOrExpression left hand side of the {@link Condition} must not be {@literal null}.
+	 * @param expressions right hand side (collection {@link Expression}) must not be {@literal null}.
+	 * @return the {@link In} {@link Condition}.
+	 */
+	public static Condition in(Expression columnOrExpression, Expression... expressions) {
+
+		Assert.notNull(columnOrExpression, "Comparison column or expression must not be null");
+		Assert.notNull(expressions, "Expression argument must not be null");
+
+		return In.create(columnOrExpression, Arrays.asList(expressions));
 	}
 
 	/**

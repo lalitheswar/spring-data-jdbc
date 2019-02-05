@@ -16,6 +16,8 @@
 package org.springframework.data.relational.core.sql;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.util.Assert;
@@ -107,6 +109,22 @@ public class Table extends AbstractSegment {
 
 		Assert.notNull(names, "Names must not be null");
 
+		return columns(Arrays.asList(names));
+	}
+
+	/**
+	 * Creates a {@link List} of {@link Column}s associated with this {@link Table}.
+	 * <p/>
+	 * Note: This {@link Table} does not track column creation and there is no possibility to enumerate all
+	 * {@link Column}s that were created for this table.
+	 *
+	 * @param names column names, must not be {@literal null} or empty.
+	 * @return a new {@link List} of {@link Column}s associated with this {@link Table}.
+	 */
+	public List<Column> columns(Collection<String> names) {
+
+		Assert.notNull(names, "Names must not be null");
+
 		List<Column> columns = new ArrayList<>();
 		for (String name : names) {
 			columns.add(column(name));
@@ -139,7 +157,7 @@ public class Table extends AbstractSegment {
 
 	/**
 	 * @return the table name as it is used in references. This can be the actual {@link #getName() name} or an
-	 *         {@link Aliased#getAlias() alias}.
+	 * {@link Aliased#getAlias() alias}.
 	 */
 	public String getReferenceName() {
 		return name;
